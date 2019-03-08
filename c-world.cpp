@@ -1,18 +1,22 @@
 #include <iostream>
 #include <Windows.h>
+#include <string>
 #include <chrono>
 #include <thread>
 using namespace std;
 
-void GoToXY(int column, int line) {
+void DrawAtXY(int column, int line, string content, bool rev) {
 	COORD coord;
 	coord.X = column;
 	coord.Y = line;
 
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (!SetConsoleCursorPosition(hConsole, coord)) {
-		throw new exception("Setting Cursor failed :(");
+		// oh oh
 	}
+
+	if (rev) reverse(content.begin(), content.end());
+	cout << content;
 }
 
 int main() {
@@ -21,17 +25,24 @@ int main() {
 	bool ltr = true;
 
 	while (true) {
-		GoToXY(draw, 3);
-		cout << "fish";
-		this_thread::sleep_for(chrono::milliseconds(500));
+		if (ltr) {
+			DrawAtXY(draw, 3, "fish", false);
+		} else {
+			DrawAtXY(draw, 3, "fish", true);
+		}
 		
-		GoToXY(draw, 3);
+		this_thread::sleep_for(chrono::milliseconds(100));
+		
+		DrawAtXY(draw, 3, "    ", false);
 		cout << "    ";
-		draw++;
-	}
+		
+		if (ltr) {
+			draw++;
+		} else {
+			draw--;
+		}
 
-	while (true) {
-		if (draw > 80) ltr = false;
+		if (draw > 75) ltr = false;
 		if (draw < 1) ltr = true;
 	}
 
