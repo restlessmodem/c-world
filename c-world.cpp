@@ -3,23 +3,22 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <list>
 using namespace std;
 
-void DrawObject(int x, int y, int rows, string content[], int color) {
+void DrawObject(int x, int y, list<string> content, int color) {
 	// Declare coord and initialize handle
-	COORD coord;
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
 
-	for (int i = 0; i < rows; i++) {
-		// Set location
-		coord.X = x;
-		coord.Y = y;
-
-		// Set output properties and print to console
+	for (auto const& row : content) {
+		// Set output properties, print to console and move
 		SetConsoleCursorPosition(hConsole, coord);
 		SetConsoleTextAttribute(hConsole, color);
-		cout << content[i];
-		y++;
+		cout << row;
+		coord.Y++;
 	}
 }
 
@@ -27,29 +26,32 @@ class Fish {
 public:
 	// Member variables
 	string name = "Fish";
+	list<string> fish_ltr, fish_rtl;
 	int x, y, speed = 1;
 	bool ltr = true;
 
 	// Constructor
-	Fish (int x, int y) {
+	Fish (int x, int y, list<string> fish_ltr, list<string> fish_rtl) {
 		this->x = x;
 		this->y = y;
+		this->fish_ltr = fish_ltr;
+		this->fish_rtl = fish_rtl;
 	}
 
 	// Methods
-	void move(string fish_ltr[], string fish_rtl[]) {
+	void move() {
 		for (int i = 0; i < speed; i++) {
 			if (ltr) {
-				DrawObject(x, y, 3, fish_ltr, 28);
-				cout << name << " ";
+				DrawObject(x, y, fish_ltr, 28);
 				x++;
 			}
 			else {
-				DrawObject(x, y, 3, fish_rtl, 26);
-				cout << name << " ";
+				DrawObject(x, y, fish_rtl, 26);
 				x--;
 			}
+			cout << name << " ";
 
+			// Check if we reached the edge
 			if (x > 80) ltr = false;
 			else if (x < 1) ltr = true;
 		}
@@ -60,35 +62,37 @@ int main() {
 	// Set up
 	system("color 1F");
 	srand((unsigned)time(NULL)); // Randomness
-	int speed = 10 + rand() % (500 + 1) - 10;
+	//int tick = 10 + rand() % (500 + 1) - 10;
+	int tick = 100;
 
 	// Fish design
-	string testfish_rtl[] = {
+	list<string> testfish_rtl = {
 		" o   . -= -.   ",
 		"  o (       >< ",
 		"     `- = -'   " };
-	string testfish_ltr[] = {
+	list<string> testfish_ltr = {
 		"   . -= -.   o ",
 		" ><       ) o  ",
 		"   `- = -'     " };
 
 	// Load fish
-	Fish *maike = new Fish(74, 3);
+	Fish *maike = new Fish(74, 12, testfish_ltr, testfish_rtl);
 	maike->name = "Maike";
 
-	Fish* anna = new Fish(24, 20);
+	Fish* anna = new Fish(24, 20, testfish_ltr, testfish_rtl);
 	anna->name = "Anna";
+	anna->speed = 2;
 
-	Fish* christopher = new Fish(24, 12);
+	Fish* christopher = new Fish(24, 3, testfish_ltr, testfish_rtl);
 	christopher->name = "Christopher";
-	christopher->speed = 2;
+	christopher->speed = 3;
 
 	// Runtime loop
 	while (true) {
-		maike->move(testfish_ltr, testfish_rtl);
-		anna->move(testfish_ltr, testfish_rtl);
-		christopher->move(testfish_ltr, testfish_rtl);
-		this_thread::sleep_for(chrono::milliseconds(speed));
+		christopher->move();
+		maike->move();
+		anna->move();
+		this_thread::sleep_for(chrono::milliseconds(tick));
 	}
 
 	return 0;
