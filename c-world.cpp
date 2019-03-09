@@ -5,45 +5,61 @@
 #include <thread>
 using namespace std;
 
-void DrawAtXY(int column, int line, string content, bool rev) {
+void DrawObject(int x, int y, int rows, string content[], int color) {
+	// Declare coord and initialize handle
 	COORD coord;
-	coord.X = column;
-	coord.Y = line;
-
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!SetConsoleCursorPosition(hConsole, coord)) {
-		// oh oh
-	}
 
-	if (rev) reverse(content.begin(), content.end());
-	cout << content;
+	for (int i = 0; i < rows; i++) {
+		// Set location
+		coord.X = x;
+		coord.Y = y;
+
+		// Set output properties and print to console
+		SetConsoleCursorPosition(hConsole, coord);
+		SetConsoleTextAttribute(hConsole, color);
+		cout << content[i];
+		y++;
+	}
 }
 
 int main() {
-	//int lines = 24;
-	int draw = 1;
+	// Set up
+	system("color 1F");
+	int startX = 74;
 	bool ltr = true;
 
+	// Randomness
+	srand((unsigned)time(NULL));
+	int random = 10 + rand() % (500 + 1) - 10;
+
+	// Load fish
+	string testfish_rtl[] = {
+		" o   . -= -.   ",
+		"  o (       >< ",
+		"     `- = -'   "};
+
+	string testfish_ltr[] = {
+		"   . -= -.   o ",
+		" ><       ) o  ",
+		"   `- = -'     " };
+
+	// Runtime loop
 	while (true) {
 		if (ltr) {
-			DrawAtXY(draw, 3, "fish", false);
+			DrawObject(startX, 3, 3, testfish_ltr, 29);
+			startX++;
 		} else {
-			DrawAtXY(draw, 3, "fish", true);
+			DrawObject(startX, 3, 3, testfish_rtl, 26);
+			startX--;
 		}
 		
-		this_thread::sleep_for(chrono::milliseconds(100));
-		
-		DrawAtXY(draw, 3, "    ", false);
-		cout << "    ";
-		
-		if (ltr) {
-			draw++;
-		} else {
-			draw--;
-		}
+		if (startX > 80) ltr = false;
+		else if (startX < 1) ltr = true;
 
-		if (draw > 75) ltr = false;
-		if (draw < 1) ltr = true;
+		
+		cout << "Maike - " << random << "  ";
+		this_thread::sleep_for(chrono::milliseconds(random));
 	}
 
 	return 0;
