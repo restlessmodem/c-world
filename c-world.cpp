@@ -13,10 +13,10 @@ void DrawObject(int x, int y, list<string> content, int color) {
 	coord.X = x;
 	coord.Y = y;
 
+	// Set output properties, print to console and move
+	SetConsoleTextAttribute(hConsole, color);
 	for (auto const& row : content) {
-		// Set output properties, print to console and move
 		SetConsoleCursorPosition(hConsole, coord);
-		SetConsoleTextAttribute(hConsole, color);
 		cout << row;
 		coord.Y++;
 	}
@@ -25,28 +25,37 @@ void DrawObject(int x, int y, list<string> content, int color) {
 class Fish {
 public:
 	// Member variables
-	string name = "Fish";
+	string name;
 	list<string> fish_ltr, fish_rtl;
-	int x, y, speed = 1;
+	int x, y, speed = 1, color = 23; // default color is white
 	bool ltr = true;
 
 	// Constructor
-	Fish (int x, int y, list<string> fish_ltr, list<string> fish_rtl) {
+	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, string name) {
 		this->x = x;
 		this->y = y;
 		this->fish_ltr = fish_ltr;
 		this->fish_rtl = fish_rtl;
+	}
+	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, string name, int speed, int color) {
+		this->x = x;
+		this->y = y;
+		this->fish_ltr = fish_ltr;
+		this->fish_rtl = fish_rtl;
+		this->name = name;
+		this->speed;
+		this->color;
 	}
 
 	// Methods
 	void move() {
 		for (int i = 0; i < speed; i++) {
 			if (ltr) {
-				DrawObject(x, y, fish_ltr, 28);
+				DrawObject(x, y, fish_ltr, color);
 				x++;
 			}
 			else {
-				DrawObject(x, y, fish_rtl, 26);
+				DrawObject(x, y, fish_rtl, color);
 				x--;
 			}
 			cout << name << " ";
@@ -76,24 +85,16 @@ int main() {
 		"   `- = -'     " };
 
 	// Load fish
-	Fish *maike = new Fish(74, 12, testfish_ltr, testfish_rtl);
-	maike->name = "Maike";
-
-	Fish* anna = new Fish(24, 20, testfish_ltr, testfish_rtl);
-	anna->name = "Anna";
-	anna->speed = 2;
-
-	Fish* christopher = new Fish(24, 3, testfish_ltr, testfish_rtl);
-	christopher->name = "Christopher";
-	christopher->speed = 3;
+	list<Fish> fishlist;
+	fishlist.push_front(Fish(74, 12, testfish_ltr, testfish_rtl, "Maike"));
+	fishlist.push_front(Fish(24, 20, testfish_ltr, testfish_rtl, "Anna", 2, 26));
+	fishlist.push_front(Fish(24, 3, testfish_ltr, testfish_rtl, "Christopher", 3, 28));
 
 	// Runtime loop
 	while (true) {
-		christopher->move();
-		maike->move();
-		anna->move();
+		for (auto& fish : fishlist) fish.move();
 		this_thread::sleep_for(chrono::milliseconds(tick));
 	}
-
+	
 	return 0;
 }
