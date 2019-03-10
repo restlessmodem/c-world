@@ -36,6 +36,7 @@ public:
 		this->y = y;
 		this->fish_ltr = fish_ltr;
 		this->fish_rtl = fish_rtl;
+		this->name = name;
 	}
 	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, string name, int speed, int color) {
 		this->x = x;
@@ -43,8 +44,8 @@ public:
 		this->fish_ltr = fish_ltr;
 		this->fish_rtl = fish_rtl;
 		this->name = name;
-		this->speed;
-		this->color;
+		this->speed = speed;
+		this->color = color;
 	}
 
 	// Methods
