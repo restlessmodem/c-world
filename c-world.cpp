@@ -31,20 +31,20 @@ public:
 	bool ltr = true;
 
 	// Constructor
-	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, string name) {
+	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, int speed) {
 		this->x = x;
 		this->y = y;
 		this->fish_ltr = fish_ltr;
 		this->fish_rtl = fish_rtl;
-		this->name = name;
-	}
-	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, string name, int speed, int color) {
-		this->x = x;
-		this->y = y;
-		this->fish_ltr = fish_ltr;
-		this->fish_rtl = fish_rtl;
-		this->name = name;
 		this->speed = speed;
+	}
+	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, int speed, string name, int color) {
+		this->x = x;
+		this->y = y;
+		this->fish_ltr = fish_ltr;
+		this->fish_rtl = fish_rtl;
+		this->speed = speed;
+		this->name = name;
 		this->color = color;
 	}
 
@@ -66,13 +66,20 @@ public:
 			else if (x < 1) ltr = true;
 		}
 	}
+	void turn() {
+		ltr = !ltr;
+	}
 };
+
+void fill_randomly(list<Fish>* fishlist, list<string> testfish_ltr, list<string> testfish_rtl, int count = 5) {
+	for (int i = 0; i <= count; i++)
+		fishlist->push_front(Fish(rand() % 80 + 1, rand() % 24 + 1, testfish_ltr, testfish_rtl, rand() % 5 + 1));
+}
 
 int main() {
 	// Set up
 	system("color 1F");
-	srand((unsigned)time(NULL)); // Randomness
-	//int tick = 10 + rand() % (500 + 1) - 10;
+	srand((unsigned)time(NULL)); // randomness seed
 	int tick = 100;
 
 	// Fish design
@@ -87,9 +94,9 @@ int main() {
 
 	// Load fish
 	list<Fish> fishlist;
-	fishlist.push_front(Fish(74, 12, testfish_ltr, testfish_rtl, "Maike"));
-	fishlist.push_front(Fish(24, 20, testfish_ltr, testfish_rtl, "Anna", 2, 26));
-	fishlist.push_front(Fish(24, 3, testfish_ltr, testfish_rtl, "Christopher", 3, 28));
+	fishlist.push_front(Fish(74, 12, testfish_ltr, testfish_rtl, 1, "Maike", 29));
+	fishlist.push_front(Fish(24, 20, testfish_ltr, testfish_rtl, 2, "Anna", 26));
+	fill_randomly(&fishlist, testfish_ltr, testfish_rtl);
 
 	// Runtime loop
 	while (true) {
