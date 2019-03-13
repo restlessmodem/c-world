@@ -79,8 +79,9 @@ void fill_randomly(list<Fish>* fishlist, list<string> testfish_ltr, list<string>
 int main() {
 	// Set up
 	system("color 1F");
+	system("mode 110, 30");
 	srand((unsigned)time(NULL)); // randomness seed
-	int tick = 100;
+	int tick = 200;
 
 	// Fish design
 	list<string> testfish_rtl = {
