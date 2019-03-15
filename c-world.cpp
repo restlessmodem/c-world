@@ -1,10 +1,12 @@
 #include <iostream>
 #include <Windows.h>
 #include <string>
+#include <fstream>
 #include <chrono>
 #include <thread>
 #include <list>
 using namespace std;
+string lastEvent;
 
 void DrawObject(int x, int y, list<string> content, int color) {
 	// Declare coord and initialize handle
@@ -15,7 +17,7 @@ void DrawObject(int x, int y, list<string> content, int color) {
 
 	// Set output properties, print to console and move
 	SetConsoleTextAttribute(hConsole, color);
-	for (auto &row : content) {
+	for (auto& row : content) {
 		SetConsoleCursorPosition(hConsole, coord);
 		cout << row;
 		coord.Y++;
@@ -28,62 +30,74 @@ public:
 	string name;
 	list<string> fish_ltr, fish_rtl;
 	int _id;
-	int x, y, speed = 1, color = 23; // default color is white
+	int x, y, speed, color; // default color is white
 	bool ltr = true;
 
 	// Constructor
-	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, int speed) {
+	Fish(int px, int py, list<string> pfish_ltr, list<string> pfish_rtl, int pspeed, string pname, int pcolor) {
+		// Unique ID
 		static int id = 0;
 		_id = id++;
-		this->x = x;
-		this->y = y;
-		this->fish_ltr = fish_ltr;
-		this->fish_rtl = fish_rtl;
-		this->speed = speed;
+
+		// Fill member variables with parameters
+		x = px;
+		y = py;
+		fish_ltr = pfish_ltr;
+		fish_rtl = pfish_rtl;
+		speed = pspeed;
+		name = pname;
+		color = pcolor;
 	}
-	Fish(int x, int y, list<string> fish_ltr, list<string> fish_rtl, int speed, string name, int color) {
-		static int id = 0;
-		_id = id++;
-		this->x = x;
-		this->y = y;
-		this->fish_ltr = fish_ltr;
-		this->fish_rtl = fish_rtl;
-		this->speed = speed;
-		this->name = name;
-		this->color = color;
+
+	void repaint() {
+		if (ltr)
+			DrawObject(x, y, fish_ltr, color);
+		else
+			DrawObject(x, y, fish_rtl, color);
 	}
 
 	// Methods
-	void move() {
+	void move_horizontally() {
 		for (int i = 0; i < speed; i++) {
-			if (ltr) {
-				DrawObject(x, y, fish_ltr, color);
-				x++;
-			}
-			else {
-				DrawObject(x, y, fish_rtl, color);
-				x--;
-			}
+			if (ltr) x++;
+			else x--;
+			repaint();
 			cout << name << " ";
 
 			// Check if we reached the edge
-			if (x > 80) ltr = false;
+			if (x > 80 - fish_rtl.front().length()) ltr = false;
 			else if (x < 1) ltr = true;
 		}
 	}
 	void turn() {
-		ltr = !ltr;
+		if (x < 80 - fish_rtl.front().length() && x > 1) // Don't turn if on the edge
+			ltr = !ltr;
+	}
+	void ascend() {
+		if (y > 1) {
+			y--;
+			repaint();
+			system("cls");
+		}
+	}
+	void descend() {
+		if (y < 21) {
+			y++;
+			repaint();
+			system("cls");
+		}
 	}
 
 	bool operator == (Fish fish) {
 		return name == fish.name;
 	}
 
-	void checkCollision(list<Fish> *fishlist) { // TODO: speed
+	void checkCollision(list<Fish> * fishlist) { // TODO: speed
 		list<Fish>::iterator it;
 		for (it = fishlist->begin(); it != fishlist->end(); ++it) {
 			if (this->x == it->x && this->y == it->y && this->_id != it->_id && (rand() % 100) < 2) { // 2% probability
 				// Collision reached
+				lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
 				it = fishlist->erase(it);
 				return;
 			}
@@ -93,51 +107,74 @@ public:
 
 void fill_randomly(list<Fish> *fishlist, list<string> testfish_ltr, list<string> testfish_rtl, int count = 5) {
 	for (int i = 0; i <= count - 1; i++)
-		fishlist->push_front(Fish(rand() % 80 + 1, rand() % 24 + 1, testfish_ltr, testfish_rtl, 1, "Fish", rand() % (159 + 1 - 144) + 144));
+		fishlist->push_front(Fish(rand() % 80 + 1, rand() % 25 + 1, testfish_ltr, testfish_rtl, 1, "Fish", rand() % (159 + 1 - 144) + 144));
 }
 
-void print_info(list<Fish> *fishlist) {
+void print_statusbar(list<Fish> * fishlist) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = 1;
-	coord.Y = 1;
+	coord.Y = 29;
 
 	SetConsoleCursorPosition(hConsole, coord);
-	cout << fishlist->size(); // Fish count
+	SetConsoleTextAttribute(hConsole, 159);
+	cout << "Fishes: " << fishlist->size() << " | ";
+	if (lastEvent != "") cout << lastEvent << " | ";
 }
 
 int main() {
 	// Set up
 	system("color 9F"); // 144 - 159
-	system("mode 110, 30");
+	system("mode 105, 30");
 	srand((unsigned)time(NULL)); // randomness seed
-	int tick = 50;
+	int tick = 200;
 
 	// Fish design
 	list<string> testfish_rtl = {
 		" o   . -= -.   ",
 		"  o (       >< ",
-		"     `- = -'   " };
+		"     `- = -'   ",
+		"               " };
 	list<string> testfish_ltr = {
 		"   . -= -.   o ",
 		" ><       ) o  ",
-		"   `- = -'     " };
+		"   `- = -'     ",
+		"               " };
+	list<string> derAAL_ltr = {
+		"    __--__--__--__--___--__     ",
+		" ///               (    o  \\   ",
+		" \\\\\\__--__--__--__--___--__/ ",
+		"                                "};
+	list<string> derAAL_rtl = {
+		"    __---__---__---__---__      ",
+		"   / o    )               \\\\  ",
+		"   \\__---__---__---__---__///  ",
+		"                                "};
 
 	// Load fish
 	list<Fish> fishlist;
-	fishlist.push_front(Fish(70, 12, testfish_ltr, testfish_rtl, 1, "Anna", 159));
-	fishlist.push_front(Fish(79, 12, testfish_ltr, testfish_rtl, 1, "Maike", 159));
-	fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 50);
+	fishlist.push_front(Fish(79, 12, testfish_ltr, testfish_rtl, 1, "Chiara", 159));
+	fishlist.push_front(Fish(30, 12, derAAL_ltr, derAAL_rtl, 1, "Anna", 159));
+	fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 5);
 
 	// Runtime loop
 	list<Fish>::iterator it;
-	do {	
+	it = fishlist.begin();
+	do {
 		for (it = fishlist.begin(); it != fishlist.end(); ++it) {
-			it->move();
+			it->move_horizontally();
 			it->checkCollision(&fishlist);
-			// cout << it->_id << "    "; // Print fish's id
+
+			// Random behaivor
+			if ((rand() % 100) < 1) // 1% probability
+				if ((rand() % 100) < 50) // 50% probability
+					it->ascend();
+				else 
+					it->descend();
+			if ((rand() % 100) < 5) // 5% probability
+				it->turn();
 		}
-		print_info(&fishlist);
+		print_statusbar(&fishlist);
 		this_thread::sleep_for(chrono::milliseconds(tick));
 	} while (fishlist.size() > 0);
 
