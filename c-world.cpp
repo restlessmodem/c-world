@@ -9,13 +9,14 @@ using namespace std;
 
 // Global variables
 string lastEvent;
-int maxX = 80, maxY = 24;
+unsigned int maxX, maxY;
 
 // Prototypes
 class Fish;
 void DrawObject(int, int, list<string>, int);
 void fill_randomly(list<Fish>*, list<string>, list<string>, int);
 void print_statusbar(list<Fish>*);
+void updateAquariumSize();
 
 // Implementation
 class Fish {
@@ -58,12 +59,12 @@ public:
 			repaint();
 
 			// Check if we reached the edge
-			if (x > 80 - fish_rtl.front().length()) ltr = false;
+			if (x > maxX - fish_rtl.front().length() - name.length() - 1) ltr = false;
 			else if (x < 1) ltr = true;
 		}
 	}
 	void move_vertically(bool up) {
-		if (y > 1 && y < 21) {
+		if (y > 1 && y < maxY - 5) {
 			if (up)
 				y--;
 			else
@@ -73,7 +74,7 @@ public:
 		}
 	}
 	void turn() {
-		if (x < 80 - fish_rtl.front().length() && x > 1) // Don't turn if on the edge
+		if (x < maxX - fish_rtl.front().length() && x > 1) // Don't turn if on the edge
 			ltr = !ltr;
 	}
 	void checkCollision(list<Fish> * fishlist) {
@@ -95,7 +96,9 @@ public:
 void DrawObject(int x, int y, list<string> content, int color) { // Draw object at coordinates
 	// Declare coord and initialize handle
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD coord = { x, y };
+	COORD coord;
+	coord.X = x;
+	coord.Y = y;
 
 	// Set output properties, print to console and move
 	SetConsoleTextAttribute(hConsole, color);
@@ -111,21 +114,36 @@ void fill_randomly(list<Fish> * fishlist, list<string> testfish_ltr, list<string
 }
 void print_statusbar(list<Fish>* fishlist) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-	COORD coord = { 1, maxY + 5 };
+	COORD coord;
+	coord.X = 1;
+	coord.Y = maxY-1;
 
 	SetConsoleCursorPosition(hConsole, coord);
 	SetConsoleTextAttribute(hConsole, 159);
 	cout << "Fishes: " << fishlist->size() << " | ";
+	cout << maxX << "-" << maxY << " | ";
 	if (lastEvent != "") cout << lastEvent << " | ";
 	cout << "Actions: New [n] Feed [f] Kill [k]";
+}
+void updateAquariumSize() {
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hConsole, &csbi);
+	if (maxX != csbi.dwSize.X || maxY != csbi.dwSize.Y) {
+		maxX = csbi.dwSize.X;
+		maxY = csbi.dwSize.Y;
+		system("cls");
+	}
 }
 
 int main() {
 	// Set up
 	system("color 9F"); // 144 - 159
 	system("mode 105, 30");
+	system("cls");
+	updateAquariumSize();
 	srand((unsigned)time(NULL)); // randomness seed
-	int tick = 100;
+	int tick = 200;
 
 	// Fish design
 	list<string> testfish_rtl = {
@@ -151,7 +169,7 @@ int main() {
 	list<Fish> fishlist;
 	fishlist.push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, "Chiara", 159));
 	fishlist.push_front(Fish(30, 12, derAAL_ltr, derAAL_rtl, 2, "Anna", 158));
-	//fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
+	fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
 
 	// Runtime loop
 	list<Fish>::iterator it;
@@ -171,6 +189,7 @@ int main() {
 			if ((rand() % 100) < 5) // 5% probability
 				it->turn();
 		}
+		updateAquariumSize();
 		print_statusbar(&fishlist);
 		this_thread::sleep_for(chrono::milliseconds(tick));
 	} while (fishlist.size() > 0);
