@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <string>
 #include <fstream>
+#include <conio.h>
 #include <chrono>
 #include <thread>
 #include <list>
@@ -10,6 +11,7 @@ using namespace std;
 // Global variables
 string lastEvent;
 unsigned int maxX, maxY;
+bool exitNow = false;
 
 // Prototypes
 class Fish;
@@ -59,12 +61,16 @@ public:
 			repaint();
 
 			// Check if we reached the edge
-			if (x > maxX - fish_rtl.front().length() - name.length() - 1) ltr = false;
-			else if (x < 1) ltr = true;
+			if ((x == maxX - fish_rtl.front().length() - name.length() - 1) || x == 1)
+				ltr = !ltr;
+			else if ((x > maxX - fish_rtl.front().length() - name.length() - 1) || x < 1) {
+				x = 10; // Relocate fish who ended up outside the aquarium on console resize
+				y = 10;
+			}
 		}
 	}
 	void move_vertically(bool up) {
-		if (y > 1 && y < maxY - 5) {
+		if (y > 1 && y < maxY - 7) {
 			if (up)
 				y--;
 			else
@@ -110,7 +116,7 @@ void DrawObject(int x, int y, list<string> content, int color) { // Draw object 
 }
 void fill_randomly(list<Fish> * fishlist, list<string> testfish_ltr, list<string> testfish_rtl, int count = 5) {
 	for (int i = 0; i <= count - 1; i++)
-		fishlist->push_front(Fish(rand() % maxX + 1, rand() % maxY + 1, testfish_ltr, testfish_rtl, rand() % 5 + 1, "Fish", rand() % (159 + 1 - 144) + 144));
+		fishlist->push_front(Fish(15, 15, testfish_ltr, testfish_rtl, rand() % 5 + 1, "Fish", rand() % (159 + 1 - 144) + 144));
 }
 void print_statusbar(list<Fish>* fishlist) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -123,7 +129,7 @@ void print_statusbar(list<Fish>* fishlist) {
 	cout << "Fishes: " << fishlist->size() << " | ";
 	cout << maxX << "-" << maxY << " | ";
 	if (lastEvent != "") cout << lastEvent << " | ";
-	cout << "Actions: New [n] Feed [f] Kill [k]";
+	cout << "Actions: New [n] Quit [q]";
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -135,16 +141,7 @@ void updateAquariumSize() {
 		system("cls");
 	}
 }
-
-int main() {
-	// Set up
-	system("color 9F"); // 144 - 159
-	system("mode 105, 30");
-	system("cls");
-	updateAquariumSize();
-	srand((unsigned)time(NULL)); // randomness seed
-	int tick = 200;
-
+void userInput(list<Fish> *fishlist) {
 	// Fish design
 	list<string> testfish_rtl = {
 		" o   . -= -.   ",
@@ -165,13 +162,57 @@ int main() {
 		"   \\__---__---__---__---__///  ",
 		"                                " };
 
+	int input;
+	do {
+		do {
+			input = _getch();
+			input = toupper(input);
+		} while (input != 'N' && input != 'Q');
+		if (input == 'N') {
+			fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, "Juliette", 145));
+			lastEvent = "Fish has been added";
+		} else if (input == 'Q') {
+			exitNow = true;
+		}
+	} while (!exitNow);
+}
+
+int main() {
+	// Set up
+	system("color 9F"); // 144 - 159
+	system("mode 105, 30");
+	updateAquariumSize();
+	srand((unsigned)time(NULL)); // randomness seed
+	int tick = 200;
+
+	// Fish design
+	list<string> testfish_rtl = {
+	" o   . -= -.   ",
+	"  o (       >< ",
+	"     `- = -'   " };
+	list<string> testfish_ltr = {
+		"   . -= -.   o ",
+		" ><       ) o  ",
+		"   `- = -'     " };
+	list<string> derAAL_ltr = {
+		"    __--__--__--__--___--__     ",
+		" ///               (    o  \\   ",
+		" \\\\\\__--__--__--__--___--__/ ",
+		"                                " };
+	list<string> derAAL_rtl = {
+		"    __---__---__---__---__      ",
+		"   / o    )               \\\\  ",
+		"   \\__---__---__---__---__///  ",
+		"                                " };
+
 	// Load fish
 	list<Fish> fishlist;
 	fishlist.push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, "Chiara", 159));
-	fishlist.push_front(Fish(30, 12, derAAL_ltr, derAAL_rtl, 2, "Anna", 158));
-	fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
+	fishlist.push_front(Fish(30, 12, derAAL_ltr, derAAL_rtl, 3, "Anna", 158));
+	//fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
 
 	// Runtime loop
+	thread inputThread(userInput, &fishlist);
 	list<Fish>::iterator it;
 	it = fishlist.begin();
 	do {
@@ -192,7 +233,8 @@ int main() {
 		updateAquariumSize();
 		print_statusbar(&fishlist);
 		this_thread::sleep_for(chrono::milliseconds(tick));
-	} while (fishlist.size() > 0);
+	} while (!exitNow);
 
+	inputThread.join();
 	return 0;
 }
