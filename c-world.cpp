@@ -129,7 +129,7 @@ void print_statusbar(list<Fish>* fishlist) {
 	cout << "Fishes: " << fishlist->size() << " | ";
 	cout << maxX << "-" << maxY << " | ";
 	if (lastEvent != "") cout << lastEvent << " | ";
-	cout << "Actions: New [n] Quit [q]";
+	cout << "Actions: New [n] Quit [q] \t";
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -140,6 +140,12 @@ void updateAquariumSize() {
 		maxY = csbi.dwSize.Y;
 		system("cls");
 	}
+}
+void hideConsoleInput() {
+	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD mode = 0;
+	GetConsoleMode(hStdin, &mode);
+	SetConsoleMode(hStdin, mode & (~ENABLE_ECHO_INPUT));
 }
 void userInput(list<Fish> *fishlist) {
 	// Fish design
@@ -161,6 +167,7 @@ void userInput(list<Fish> *fishlist) {
 		"   / o    )               \\\\  ",
 		"   \\__---__---__---__---__///  ",
 		"                                " };
+	string fishname;
 
 	int input;
 	do {
@@ -169,7 +176,11 @@ void userInput(list<Fish> *fishlist) {
 			input = toupper(input);
 		} while (input != 'N' && input != 'Q');
 		if (input == 'N') {
-			fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, "Juliette", 145));
+			lastEvent = "Gib den Namen des neuen Fisches ein und bestätige mit Enter!";
+			hideConsoleInput();
+			do {getline(cin, fishname);} while (fishname == "");
+			fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, fishname, 145));
+			system("cls");
 			lastEvent = "Fish has been added";
 		} else if (input == 'Q') {
 			exitNow = true;
@@ -178,12 +189,14 @@ void userInput(list<Fish> *fishlist) {
 }
 
 int main() {
-	// Set up
-	system("color 9F"); // 144 - 159
-	system("mode 105, 30");
-	updateAquariumSize();
+	// Console setup
+	system("color 9F"); // Color and Size [144 - 159]
+	system("mode 150, 40");
+	updateAquariumSize(); // set application size to console size
+	
+	// Misc setup
 	srand((unsigned)time(NULL)); // randomness seed
-	int tick = 200;
+	int tick = 200; // tick duration in ms
 
 	// Fish design
 	list<string> testfish_rtl = {
@@ -207,8 +220,6 @@ int main() {
 
 	// Load fish
 	list<Fish> fishlist;
-	fishlist.push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, "Chiara", 159));
-	fishlist.push_front(Fish(30, 12, derAAL_ltr, derAAL_rtl, 3, "Anna", 158));
 	//fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
 
 	// Runtime loop
