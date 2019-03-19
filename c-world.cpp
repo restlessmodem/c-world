@@ -9,16 +9,17 @@
 using namespace std;
 
 // Global variables
-string lastEvent;
+string lastEvent, selectedFishName;
 unsigned int maxX, maxY;
 bool exitNow = false;
 
 // Prototypes
 class Fish;
 void DrawObject(int, int, list<string>, int);
-void fill_randomly(list<Fish>*, list<string>, list<string>, int);
 void print_statusbar(list<Fish>*);
 void updateAquariumSize();
+void hideConsoleInput();
+void checkIfFishExists(string);
 
 // Implementation
 class Fish {
@@ -114,22 +115,33 @@ void DrawObject(int x, int y, list<string> content, int color) { // Draw object 
 		coord.Y++;
 	}
 }
-void fill_randomly(list<Fish> * fishlist, list<string> testfish_ltr, list<string> testfish_rtl, int count = 5) {
-	for (int i = 0; i <= count - 1; i++)
-		fishlist->push_front(Fish(15, 15, testfish_ltr, testfish_rtl, rand() % 5 + 1, "Fish", rand() % (159 + 1 - 144) + 144));
-}
 void print_statusbar(list<Fish>* fishlist) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = 1;
 	coord.Y = maxY-1;
-
 	SetConsoleCursorPosition(hConsole, coord);
 	SetConsoleTextAttribute(hConsole, 159);
+
+	// Aquarium controls
 	cout << "Fishes: " << fishlist->size() << " | ";
 	cout << maxX << "-" << maxY << " | ";
 	if (lastEvent != "") cout << lastEvent << " | ";
-	cout << "Actions: New [n] Quit [q] \t";
+	cout << "Actions: New [n] Quit [q] Select [s] | Ausgewählter Fisch: ";
+
+	// Individual fish controls
+	list<Fish>::iterator it;
+	it = fishlist->begin();
+
+	if (selectedFishName == "" && fishlist->size() > 0) // If no fish selected, select first fish in list, if one is available
+		selectedFishName = it->name;
+
+	for (it = fishlist->begin(); it != fishlist->end(); ++it) {
+		if (it->name == selectedFishName) {
+			cout << it->name << " "; // TODO: fishs name in fishs color
+			break;
+		}
+	}
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -146,6 +158,13 @@ void hideConsoleInput() {
 	DWORD mode = 0;
 	GetConsoleMode(hStdin, &mode);
 	SetConsoleMode(hStdin, mode & (~ENABLE_ECHO_INPUT));
+}
+bool checkIfFishExists(string searchname, list<Fish> *fishlist) {
+	for (auto& fish : *fishlist) {
+		if (fish.name == searchname)
+			return true;
+	}
+	return false;
 }
 void userInput(list<Fish> *fishlist) {
 	// Fish design
@@ -174,16 +193,31 @@ void userInput(list<Fish> *fishlist) {
 		do {
 			input = _getch();
 			input = toupper(input);
-		} while (input != 'N' && input != 'Q');
-		if (input == 'N') {
-			lastEvent = "Gib den Namen des neuen Fisches ein und bestätige mit Enter!";
+		} while (input != 'N' && input != 'Q' && input != 'S');
+		
+		if (input == 'N') { // New
+			lastEvent = "Neuer Fisch Name?";
 			hideConsoleInput();
 			do {getline(cin, fishname);} while (fishname == "");
-			fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, fishname, 145));
-			system("cls");
-			lastEvent = "Fish has been added";
-		} else if (input == 'Q') {
+			if (!checkIfFishExists(fishname, fishlist)) {
+				fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, fishname, 145));
+				system("cls");
+				lastEvent = "Fish has been added";
+			} else {
+				lastEvent = "A fish with that name already exists :(";
+			}
+		} else if (input == 'Q') { // Quit
 			exitNow = true;
+		} else if (input == 'S') { // Prev
+			lastEvent = "Auszuwählender Fisch Name?";
+			hideConsoleInput();
+			do { getline(cin, fishname); } while (fishname == "");
+			selectedFishName = fishname;
+			system("cls");
+			if (checkIfFishExists(fishname, fishlist))
+				lastEvent = "Fish '" + fishname + "' has been selected";
+			else
+				lastEvent = "Fish '" + fishname + "' does not exist :(";
 		}
 	} while (!exitNow);
 }
@@ -192,6 +226,7 @@ int main() {
 	// Console setup
 	system("color 9F"); // Color and Size [144 - 159]
 	system("mode 150, 40");
+	locale::global(locale("German_germany"));
 	updateAquariumSize(); // set application size to console size
 	
 	// Misc setup
@@ -220,7 +255,6 @@ int main() {
 
 	// Load fish
 	list<Fish> fishlist;
-	//fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 10);
 
 	// Runtime loop
 	thread inputThread(userInput, &fishlist);
