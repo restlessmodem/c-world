@@ -19,6 +19,7 @@ void DrawObject(int, int, list<string>, int);
 void print_statusbar(list<Fish>*);
 void updateAquariumSize();
 void hideConsoleInput();
+int randRange(int, int);
 void checkIfFishExists(string);
 
 // Implementation
@@ -87,12 +88,17 @@ public:
 	void checkCollision(list<Fish> * fishlist) {
 		list<Fish>::iterator it;
 		for (it = fishlist->begin(); it != fishlist->end(); ++it) {
-			if (this->x == it->x && this->y == it->y && this->_id != it->_id && (rand() % 100) < 2) { // 2% probability; faster fish have better chance
-				// Collision reached
-				lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
-				system("cls");
-				it = fishlist->erase(it);
-				return;
+			if (this->x == it->x && this->y == it->y && this->_id != it->_id) { // Collision reached; faster fish have lower chance
+				if ((rand() % 100) < 2) { // Death; 2% probability
+					lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
+					system("cls");
+					it = fishlist->erase(it);
+					return;
+				} else if ((rand() % 100) < 2) { // Procreation; 2% probability
+					string childname = "Child of " + it->name + " & " + this->name;
+					lastEvent = it->name + "(" + to_string(it->_id) + ") has produced the child " + childname;
+					fishlist->push_front(Fish(randRange(1,maxX), randRange(1,maxY - 5), fish_ltr, fish_rtl, randRange(1,5), childname, randRange(144,159)));
+				}
 			}
 		}
 	}
@@ -159,6 +165,9 @@ void hideConsoleInput() {
 	GetConsoleMode(hStdin, &mode);
 	SetConsoleMode(hStdin, mode & (~ENABLE_ECHO_INPUT));
 }
+int randRange(int min, int max) {
+	return rand() % (max + 1 - min) + min;
+}
 bool checkIfFishExists(string searchname, list<Fish> *fishlist) {
 	for (auto& fish : *fishlist) {
 		if (fish.name == searchname)
@@ -200,8 +209,12 @@ void userInput(list<Fish> *fishlist) {
 			hideConsoleInput();
 			do {getline(cin, fishname);} while (fishname == "");
 			if (!checkIfFishExists(fishname, fishlist)) {
-				fishlist->push_front(Fish(13, 12, testfish_ltr, testfish_rtl, 1, fishname, 145));
 				system("cls");
+				int randomcolor = 0;
+				do {
+					randomcolor = randRange(144, 159);
+				} while (randomcolor == 153); // Avoid same color as background
+				fishlist->push_front(Fish(randRange(1, maxX / 2), randRange(1, maxY / 2), testfish_ltr, testfish_rtl, randRange(1, 5), fishname, randomcolor)); // Spawn somewhere in upper left quadrant
 				lastEvent = "Fish has been added";
 			} else {
 				lastEvent = "A fish with that name already exists :(";
@@ -221,10 +234,15 @@ void userInput(list<Fish> *fishlist) {
 		}
 	} while (!exitNow);
 }
+void fill_randomly(list<Fish>* fishlist, list<string> fish_ltr, list<string> fish_rtl, int count = 5) {
+	for (int i = 0; i <= count - 1; i++)
+		fishlist->push_front(Fish(randRange(1, maxX), randRange(1, maxY - 5), fish_ltr, fish_rtl, randRange(1, 5), "RandomFish", randRange(144, 159)));
+}
+
 
 int main() {
 	// Console setup
-	system("color 9F"); // Color and Size [144 - 159]
+	system("color 9F"); // Color and Size [Range: 144 - 159]
 	system("mode 150, 40");
 	locale::global(locale("German_germany"));
 	updateAquariumSize(); // set application size to console size
@@ -255,6 +273,7 @@ int main() {
 
 	// Load fish
 	list<Fish> fishlist;
+	//fill_randomly(&fishlist, testfish_ltr, testfish_rtl, 5);
 
 	// Runtime loop
 	thread inputThread(userInput, &fishlist);
@@ -267,7 +286,7 @@ int main() {
 			it->checkCollision(&fishlist);
 
 			// Random behaivor
-			if ((rand() % 100) < 1) // 1% probability
+			if ((rand() % 100) < 5) // 5% probability
 				if ((rand() % 100) < 50) // 50% probability
 					it->move_vertically(true); // up
 				else
