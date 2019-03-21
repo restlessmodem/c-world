@@ -13,6 +13,13 @@ string lastEvent, selectedFishName;
 unsigned int maxX, maxY;
 bool exitNow = false;
 
+// Configuration - global constants
+const int PROBABILITY_VERTICAL_MOVE = 5;
+const int PROBABILITY_VERTICAL_MOVE_UP = 50;
+const int PROBABILITY_TURN = 5;
+const int PROBABILITY_DEATH_ON_COLLISION = 5;
+const int PROBABILITY_PROCREATION_ON_COLLISION = 5;
+
 // Prototypes
 class Fish;
 void DrawObject(int, int, list<string>, int);
@@ -89,12 +96,12 @@ public:
 		list<Fish>::iterator it;
 		for (it = fishlist->begin(); it != fishlist->end(); ++it) {
 			if (this->x == it->x && this->y == it->y && this->_id != it->_id) { // Collision reached; faster fish have lower chance
-				if ((rand() % 100) < 2) { // Death; 2% probability
+				if ((rand() % 100) < PROBABILITY_DEATH_ON_COLLISION) { // Death
 					lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
 					system("cls");
 					it = fishlist->erase(it);
 					return;
-				} else if ((rand() % 100) < 2) { // Procreation; 2% probability
+				} else if ((rand() % 100) < PROBABILITY_PROCREATION_ON_COLLISION) { // Procreation
 					string childname = "Child of " + it->name + " & " + this->name;
 					lastEvent = it->name + "(" + to_string(it->_id) + ") has produced the child " + childname;
 					fishlist->push_front(Fish(randRange(1,maxX), randRange(1,maxY - 5), fish_ltr, fish_rtl, randRange(1,5), childname, randRange(144,159)));
@@ -286,12 +293,12 @@ int main() {
 			it->checkCollision(&fishlist);
 
 			// Random behaivor
-			if ((rand() % 100) < 5) // 5% probability
-				if ((rand() % 100) < 50) // 50% probability
+			if ((rand() % 100) < PROBABILITY_VERTICAL_MOVE) // Vertical move
+				if ((rand() % 100) < PROBABILITY_VERTICAL_MOVE_UP)
 					it->move_vertically(true); // up
 				else
 					it->move_vertically(false); // down
-			if ((rand() % 100) < 5) // 5% probability
+			if ((rand() % 100) < PROBABILITY_TURN) // Turn horizontally
 				it->turn();
 		}
 		updateAquariumSize();
