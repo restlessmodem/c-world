@@ -17,9 +17,9 @@ bool exitNow = false;
 const int PROBABILITY_VERTICAL_MOVE = 1;
 const int PROBABILITY_VERTICAL_MOVE_UP = 50;
 const int PROBABILITY_TURN = 5;
-const int PROBABILITY_DEATH_ON_COLLISION = 5;
-const int PROBABILITY_PROCREATION_ON_COLLISION = 5;
-const int TICK_DURATION = 350; // in milliseconds
+const int PROBABILITY_DEATH_ON_COLLISION = 50;
+const int PROBABILITY_PROCREATION_ON_COLLISION = 50;
+const int TICK_DURATION = 200; // in milliseconds
 const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\fishdesigns\\";
 
 // Prototypes
@@ -102,14 +102,17 @@ public:
 		if (x < maxX - design.rtl.front().length() && x > 1) // Don't turn if on the edge
 			ltr = !ltr;
 	}
+	list<Fish>::iterator kill(list<Fish>* fishlist, list<Fish>::iterator it) {
+		lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
+		system("cls");
+		return fishlist->erase(it);
+	}
 	void checkCollision(list<Fish> * fishlist) {
 		list<Fish>::iterator it;
 		for (it = fishlist->begin(); it != fishlist->end(); ++it) {
 			if (this->x == it->x && this->y == it->y && this->_id != it->_id) { // Collision reached; faster fish have lower chance
 				if ((rand() % 100) < PROBABILITY_DEATH_ON_COLLISION) { // Death
-					lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
-					system("cls");
-					it = fishlist->erase(it);
+					it = kill(fishlist, it);
 					return;
 				} else if ((rand() % 100) < PROBABILITY_PROCREATION_ON_COLLISION) { // Procreation
 					string childname = "Child of " + it->name + " & " + this->name;
@@ -120,7 +123,7 @@ public:
 		}
 	}
 	bool operator == (Fish fish) {
-		return name == fish.name;
+		return _id == fish._id;
 	}
 };
 void DrawObject(int x, int y, list<string> content, int color) { // Draw object at coordinates
@@ -142,29 +145,39 @@ void print_statusbar(list<Fish>* fishlist) {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = 1;
-	coord.Y = maxY-1;
+	coord.Y = maxY-2;
 	SetConsoleCursorPosition(hConsole, coord);
 	SetConsoleTextAttribute(hConsole, 159);
 
-	// Aquarium controls
-	cout << "Fishes: " << fishlist->size() << " | ";
-	cout << maxX << "-" << maxY << " | ";
-	if (lastEvent != "") cout << lastEvent << " | ";
-	cout << "Actions: New [n] Quit [q] Select [s] | Ausgewählter Fisch: ";
-
 	// Individual fish controls
+	cout << "Ausgewählter Fisch : ";
 	list<Fish>::iterator it;
 	it = fishlist->begin();
-
 	if (selectedFishName == "" && fishlist->size() > 0) // If no fish selected, select first fish in list, if one is available
 		selectedFishName = it->name;
 
 	for (it = fishlist->begin(); it != fishlist->end(); ++it) {
 		if (it->name == selectedFishName) {
-			cout << it->name << " "; // TODO: fishs name in fishs color
+			cout << it->name << " "; // TODO: fishs name in fishs color, error in red
 			break;
 		}
 	}
+
+	// Aquarium controls
+	cout << "\n Fishes: " << fishlist->size() << " | ";
+	cout << maxX << "-" << maxY << " | ";
+	
+	if (lastEvent != "") {
+		if (lastEvent.find("ERROR") != -1)
+			SetConsoleTextAttribute(hConsole, 148);
+		else
+			SetConsoleTextAttribute(hConsole, 157);
+		cout << lastEvent;
+		SetConsoleTextAttribute(hConsole, 159);
+		cout << " | ";
+	}
+
+	cout << "Actions: New [n] Quit [q] Select [s] Kill [k]";
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -190,7 +203,7 @@ void userInput(list<Fish> *fishlist) {
 		do {
 			input = _getch();
 			input = toupper(input);
-		} while (input != 'N' && input != 'Q' && input != 'S');
+		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K');
 		
 		if (input == 'N') { // New
 			lastEvent = "Neuer Fisch Name?";
@@ -205,11 +218,11 @@ void userInput(list<Fish> *fishlist) {
 				fishlist->push_front(Fish(randRange(1, maxX / 2), randRange(1, maxY / 2), selectRandomFishDesign(fishlist), randRange(1, 5), fishname, randomcolor)); // Spawn somewhere in upper left quadrant
 				lastEvent = "Fish has been added";
 			} else {
-				lastEvent = "A fish with that name already exists :(";
+				lastEvent = "ERROR: A fish with that name already exists :(";
 			}
 		} else if (input == 'Q') { // Quit
 			exitNow = true;
-		} else if (input == 'S') { // Prev
+		} else if (input == 'S') { // Select by name
 			lastEvent = "Auszuwählender Fisch Name?";
 			hideConsoleInput();
 			do { getline(cin, fishname); } while (fishname == "");
@@ -218,7 +231,15 @@ void userInput(list<Fish> *fishlist) {
 			if (checkIfFishExists(fishname, fishlist))
 				lastEvent = "Fish '" + fishname + "' has been selected";
 			else
-				lastEvent = "Fish '" + fishname + "' does not exist :(";
+				lastEvent = "ERROR: Fish '" + fishname + "' does not exist :(";
+		} else if (input == 'K') { // Kill
+			list<Fish>::iterator it;
+			for (it = fishlist->begin(); it != fishlist->end(); ++it) {
+				if (it->name == selectedFishName) {
+					it = it->kill(fishlist, it);
+					break;
+				}
+			}
 		}
 	}
 }
@@ -263,7 +284,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 
 		// Check if at least one fish has been loaded
 		if (availableFishDesigns.size() < 1) {
-			lastEvent = "Fish-Designs konnten nicht geladen werden! :(";
+			lastEvent = "ERROR: Fish-Designs konnten nicht geladen werden! :(";
 			system("cls");
 			print_statusbar(fishlist);
 			exitNow = true;
@@ -280,7 +301,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 }
 int main() {
 	// Console setup
-	system("color 9F"); // Color and Size [Range: 144 - 159]
+	system("color 9F"); // Color and Size [Range: 144 - 159; 146G, 148R, 157P, 159W]
 	system("mode 150, 40");
 	locale::global(locale("German_germany"));
 	updateAquariumSize(); // set application size to console size
