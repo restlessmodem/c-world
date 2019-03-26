@@ -17,10 +17,10 @@ bool exitNow = false;
 const int PROBABILITY_VERTICAL_MOVE = 1;
 const int PROBABILITY_VERTICAL_MOVE_UP = 50;
 const int PROBABILITY_TURN = 5;
-const int PROBABILITY_DEATH_ON_COLLISION = 50;
-const int PROBABILITY_PROCREATION_ON_COLLISION = 50;
+const int PROBABILITY_DEATH_ON_COLLISION = 5;
+const int PROBABILITY_PROCREATION_ON_COLLISION = 5;
 const int TICK_DURATION = 200; // in milliseconds
-const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\fishdesigns\\";
+const string FILEPATH = ".\\";
 
 // Prototypes
 struct fishDesign;
@@ -31,6 +31,7 @@ void updateAquariumSize();
 void hideConsoleInput();
 bool checkIfFishExists(string, list<Fish>*);
 int randRange(int, int);
+void fishlistSave(list<Fish>*, bool);
 fishDesign selectRandomFishDesign(list<Fish>*);
 
 // Implementation
@@ -170,8 +171,6 @@ void print_statusbar(list<Fish>* fishlist) {
 	if (lastEvent != "") {
 		if (lastEvent.find("ERROR") != -1)
 			SetConsoleTextAttribute(hConsole, 148);
-		else
-			SetConsoleTextAttribute(hConsole, 157);
 		cout << lastEvent;
 		SetConsoleTextAttribute(hConsole, 159);
 		cout << " | ";
@@ -210,7 +209,6 @@ void userInput(list<Fish> *fishlist) {
 			hideConsoleInput();
 			do {getline(cin, fishname);} while (fishname == "");
 			if (!checkIfFishExists(fishname, fishlist)) {
-				system("cls");
 				int randomcolor = 0;
 				do {
 					randomcolor = randRange(144, 159);
@@ -227,7 +225,6 @@ void userInput(list<Fish> *fishlist) {
 			hideConsoleInput();
 			do { getline(cin, fishname); } while (fishname == "");
 			selectedFishName = fishname;
-			system("cls");
 			if (checkIfFishExists(fishname, fishlist))
 				lastEvent = "Fish '" + fishname + "' has been selected";
 			else
@@ -240,6 +237,53 @@ void userInput(list<Fish> *fishlist) {
 					break;
 				}
 			}
+		}
+		system("cls");
+	}
+}
+void fishlistReadWrite(list<Fish> *fishlist, bool write) {
+	if (write) {
+		ofstream outfile;
+		outfile.open(FILEPATH + "savedfishlist.txt");
+		for (auto& fish : *fishlist) {
+			outfile << fish.x << endl;
+			outfile << fish.y << endl;
+			for (auto& row : fish.design.ltr)
+				outfile << row << endl;
+			outfile << "stop" << endl;
+			for (auto& row : fish.design.rtl)
+				outfile << row << endl;
+			outfile << "stop" << endl;
+			outfile << fish.speed << endl;
+			outfile << fish.name << endl;
+			outfile << fish.color << endl;
+		}
+	} else {
+		ifstream infile;
+		infile.open(FILEPATH + "savedfishlist.txt");
+		while (!infile.eof()) {
+			string name, tmp;
+			fishDesign design;
+			unsigned int x, y;
+			int speed, color;
+			bool ltr = true;
+
+			infile >> x;
+			infile >> y;
+			do {
+				infile >> tmp;
+				design.ltr.push_back(tmp);
+			} while (tmp != "stop");
+			do {
+				infile >> tmp;
+				design.rtl.push_back(tmp);
+			} while (tmp != "stop");
+			infile >> speed;
+			infile >> name;
+			infile >> color;
+
+			Fish tmpfish = Fish(x, y, design, speed, name, color);
+			fishlist->push_front(tmpfish);
 		}
 	}
 }
@@ -261,7 +305,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 		fishDesign tmpStruct;
 		ifstream loadfish;
 
-		loadfish.open(FILEPATH + "fish1_ltr.txt"); // first file
+		loadfish.open(FILEPATH + "fishdesigns\\fish1_ltr.txt"); // first file
 		int i = 1;
 		while (loadfish.is_open()) { // Stop if file not found
 			// left to right design
@@ -270,7 +314,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 			loadfish.close();
 
 			// right to left design
-			loadfish.open(FILEPATH + "fish" + to_string(i) + "_rtl.txt");
+			loadfish.open(FILEPATH + "fishdesigns\\fish" + to_string(i) + "_rtl.txt");
 			if (!loadfish.is_open()) break;  // Stop if file not found
 			while (getline(loadfish, line))
 				tmpStruct.rtl.push_back(line);
@@ -279,7 +323,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 			availableFishDesigns.push_back(tmpStruct); // Push into Design list
 			tmpStruct = {};
 			i++;
-			loadfish.open(FILEPATH + "fish" + to_string(i) + "_ltr.txt"); // LTR file for next iteration
+			loadfish.open(FILEPATH + "fishdesigns\\fish" + to_string(i) + "_ltr.txt"); // LTR file for next iteration
 		}
 
 		// Check if at least one fish has been loaded
@@ -296,7 +340,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 	// Select random list
 	list<fishDesign>::iterator it = availableFishDesigns.begin();
 	int random = randRange(1,availableFishDesigns.size()-1);
-	advance(it, random); // move iterator to selected list index
+	std::advance(it, random); // move iterator to selected list index
 	return *it;
 }
 int main() {
@@ -310,6 +354,9 @@ int main() {
 	srand((unsigned)time(NULL)); // randomness seed
 	int tick = TICK_DURATION; // tick duration in ms
 	list<Fish> fishlist; // Create list of active fish
+
+	// Load old state from file
+	//fishlistReadWrite(&fishlist, false);
 
 	// Runtime loop
 	thread inputThread(userInput, &fishlist);
@@ -335,6 +382,7 @@ int main() {
 		this_thread::sleep_for(chrono::milliseconds(tick));
 	} while (!exitNow);
 
+	fishlistReadWrite(&fishlist, true);
 	inputThread.join();
 	return 0;
 }
