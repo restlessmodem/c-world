@@ -21,6 +21,8 @@ const int PROBABILITY_DEATH_ON_COLLISION = 5;
 const int PROBABILITY_PROCREATION_ON_COLLISION = 5;
 const int TICK_DURATION = 200; // in milliseconds
 const string FILEPATH = ".\\";
+//const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
+
 
 // Prototypes
 struct fishDesign;
@@ -31,7 +33,7 @@ void updateAquariumSize();
 void hideConsoleInput();
 bool checkIfFishExists(string, list<Fish>*);
 int randRange(int, int);
-void fishlistSave(list<Fish>*, bool);
+void fishlistReadWrite(list<Fish>*, bool);
 fishDesign selectRandomFishDesign(list<Fish>*);
 
 // Implementation
@@ -59,8 +61,6 @@ public:
 		x = px;
 		y = py;
 		design = pdesign;
-		//fish_ltr = design.ltr;
-		//fish_rtl = design.rtl;
 		speed = pspeed;
 		name = pname;
 		color = pcolor;
@@ -84,7 +84,7 @@ public:
 			if ((x == maxX - design.rtl.front().length() - name.length() - 1) || x == 1)
 				ltr = !ltr;
 			else if ((x > maxX - design.rtl.front().length() - name.length() - 1) || x < 1) {
-				x = 10; // Relocate fish who ended up outside the aquarium on console resize
+				x = 10; // Relocate poor fish who ended up outside the aquarium on console resize
 				y = 10;
 			}
 		}
@@ -171,12 +171,14 @@ void print_statusbar(list<Fish>* fishlist) {
 	if (lastEvent != "") {
 		if (lastEvent.find("ERROR") != -1)
 			SetConsoleTextAttribute(hConsole, 148);
+		else 
+			SetConsoleTextAttribute(hConsole, 144);
 		cout << lastEvent;
 		SetConsoleTextAttribute(hConsole, 159);
 		cout << " | ";
 	}
 
-	cout << "Actions: New [n] Quit [q] Select [s] Kill [k]";
+	cout << "Actions: New [n] Save & Quit [q] Select [s] Kill [k]";
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -258,6 +260,7 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 			outfile << fish.name << endl;
 			outfile << fish.color << endl;
 		}
+		cout << "Aquarium state has been saved!";
 	} else {
 		ifstream infile;
 		infile.open(FILEPATH + "savedfishlist.txt");
@@ -268,22 +271,30 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 			int speed, color;
 			bool ltr = true;
 
-			infile >> x;
-			infile >> y;
+			getline(infile, tmp);
+			if (tmp == "") break; // quit on empty line
+			x = atoi(tmp.c_str());
+			getline(infile, tmp);
+			y = atoi(tmp.c_str());
 			do {
-				infile >> tmp;
+				getline(infile, tmp);
 				design.ltr.push_back(tmp);
-			} while (tmp != "stop");
+			} while (tmp != "stop"); // to identify fish being complete
+			design.ltr.pop_back();
 			do {
-				infile >> tmp;
+				getline(infile, tmp);
 				design.rtl.push_back(tmp);
-			} while (tmp != "stop");
-			infile >> speed;
-			infile >> name;
-			infile >> color;
+			} while (tmp != "stop"); // to identify fish being complete
+			design.rtl.pop_back();
+			getline(infile, tmp);
+			speed = atoi(tmp.c_str());
+			getline(infile, name);
+			getline(infile, tmp);
+			color = atoi(tmp.c_str());
 
 			Fish tmpfish = Fish(x, y, design, speed, name, color);
 			fishlist->push_front(tmpfish);
+			lastEvent = "Saved state has been loaded from file";
 		}
 	}
 }
@@ -356,7 +367,7 @@ int main() {
 	list<Fish> fishlist; // Create list of active fish
 
 	// Load old state from file
-	//fishlistReadWrite(&fishlist, false);
+	fishlistReadWrite(&fishlist, false);
 
 	// Runtime loop
 	thread inputThread(userInput, &fishlist);
