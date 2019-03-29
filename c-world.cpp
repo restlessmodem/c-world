@@ -10,18 +10,14 @@ using namespace std;
 
 // Global variables
 string lastEvent, selectedFishName;
-unsigned int maxX, maxY;
+unsigned int maxX = 150, maxY = 40;
 bool exitNow = false;
 
 // Configuration - global constants
-const int PROBABILITY_VERTICAL_MOVE = 1;
-const int PROBABILITY_VERTICAL_MOVE_UP = 50;
-const int PROBABILITY_TURN = 5;
-const int PROBABILITY_DEATH_ON_COLLISION = 5;
-const int PROBABILITY_PROCREATION_ON_COLLISION = 5;
+const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
+const int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
 const int TICK_DURATION = 200; // in milliseconds
 const string FILEPATH = ".\\";
-//const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
 
 
 // Prototypes
@@ -153,7 +149,7 @@ void print_statusbar(list<Fish>* fishlist) {
 	coord.X = 1;
 	coord.Y = maxY-2;
 	SetConsoleCursorPosition(hConsole, coord);
-	SetConsoleTextAttribute(hConsole, 159);
+	SetConsoleTextAttribute(hConsole, COLOR_WHITE);
 
 	// Individual fish controls
 	cout << "Ausgewählter Fisch : ";
@@ -175,11 +171,11 @@ void print_statusbar(list<Fish>* fishlist) {
 	
 	if (lastEvent != "") {
 		if (lastEvent.find("ERROR") != -1)
-			SetConsoleTextAttribute(hConsole, 148);
+			SetConsoleTextAttribute(hConsole, COLOR_RED);
 		else 
-			SetConsoleTextAttribute(hConsole, 144);
+			SetConsoleTextAttribute(hConsole, COLOR_BLACK);
 		cout << lastEvent;
-		SetConsoleTextAttribute(hConsole, 159);
+		SetConsoleTextAttribute(hConsole, COLOR_WHITE);
 		cout << " | ";
 	}
 
@@ -189,9 +185,13 @@ void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(hConsole, &csbi);
-	if (maxX != csbi.dwSize.X || maxY != csbi.dwSize.Y) {
+	/*if (maxX != csbi.dwSize.X || maxY != csbi.dwSize.Y) {
 		maxX = csbi.dwSize.X;
 		maxY = csbi.dwSize.Y;
+		system("cls");
+	}*/
+	if (maxX != csbi.dwSize.X) {
+		maxX = csbi.dwSize.X;
 		system("cls");
 	}
 }
@@ -218,8 +218,8 @@ void userInput(list<Fish> *fishlist) {
 			if (!checkIfFishExists(fishname, fishlist)) {
 				int randomcolor = 0;
 				do {
-					randomcolor = randRange(144, 159);
-				} while (randomcolor == 153); // Avoid same color as background
+					randomcolor = randRange(COLOR_BLACK, COLOR_WHITE);
+				} while (randomcolor == COLOR_AVOID); // Avoid same color as background
 				fishlist->push_front(Fish(randRange(1, maxX / 2), randRange(1, maxY / 2), selectRandomFishDesign(fishlist), randRange(1, 5), fishname, randomcolor)); // Spawn somewhere in upper left quadrant
 				lastEvent = "Fish has been added";
 			} else {
@@ -361,7 +361,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 }
 int main() {
 	// Console setup
-	system("color 9F"); // Color and Size [Range: 144 - 159; 146G, 148R, 157P, 159W]
+	system("color 1F"); // Color and Size
 	system("mode 150, 40");
 	locale::global(locale("German_germany"));
 	updateAquariumSize(); // set application size to console size
