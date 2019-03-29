@@ -17,7 +17,7 @@ bool exitNow = false;
 const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
 const int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
 const int TICK_DURATION = 200; // in milliseconds
-const string FILEPATH = ".\\";
+const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
 
 
 // Prototypes
