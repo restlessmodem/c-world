@@ -100,8 +100,13 @@ public:
 		}
 	}
 	void turn() {
-		if (x < maxX - design.rtl.front().length() && x > 1) // Don't turn if on the edge
+		if (x < maxX - design.rtl.front().length() && x > 1) { // Don't turn if on the edge
+			if (ltr)
+				x++;
+			else
+				x--;
 			ltr = !ltr;
+		}
 	}
 	list<Fish>::iterator kill(list<Fish>* fishlist, list<Fish>::iterator it) {
 		lastEvent = it->name + "(" + to_string(it->_id) + ") has been killed";
