@@ -31,6 +31,8 @@ bool checkIfFishExists(string, list<Fish>*);
 int randRange(int, int);
 void fishlistReadWrite(list<Fish>*, bool);
 void drawWaves(bool state);
+void drawSand();
+void drawSeaWeed();
 fishDesign selectRandomFishDesign(list<Fish>*);
 
 // Implementation
@@ -125,6 +127,9 @@ public:
 			}
 		}
 	}
+	void rename(string newname) {
+		this->name = newname;
+	}
 	bool operator == (Fish fish) {
 		return _id == fish._id;
 	}
@@ -180,7 +185,7 @@ void print_statusbar(list<Fish>* fishlist) {
 		cout << " | ";
 	}
 
-	cout << "Actions: New [n] Save & Quit [q] Select [s] Kill [k]";
+	cout << "Actions: New [n] Save & Quit [q] Select [s] Kill [k] Rename [r]";
 }
 void updateAquariumSize() {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -210,7 +215,7 @@ void userInput(list<Fish> *fishlist) {
 		do {
 			input = _getch();
 			input = toupper(input);
-		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K');
+		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K' && input != 'R');
 		
 		if (input == 'N') { // New
 			lastEvent = "Neuer Fisch Name?";
@@ -242,6 +247,18 @@ void userInput(list<Fish> *fishlist) {
 			for (it = fishlist->begin(); it != fishlist->end(); ++it) {
 				if (it->name == selectedFishName) {
 					it = it->kill(fishlist, it);
+					break;
+				}
+			}
+		} else if (input == 'R') { // Rename
+			list<Fish>::iterator it;
+			lastEvent = "Neuer Name?";
+			hideConsoleInput();
+			do { getline(cin, fishname); } while (fishname == "");
+
+			for (it = fishlist->begin(); it != fishlist->end(); ++it) {
+				if (it->name == selectedFishName) {
+					it->rename(fishname);
 					break;
 				}
 			}
@@ -327,6 +344,31 @@ void drawWaves(bool state) {
 		waves = {wave2};
 	}
 	DrawObject(0,3,waves,31);
+}
+void drawSand() {
+	list<string> sands;
+	string sand = ".";
+
+	for (int x = 0; x < maxX - 1; x++) {
+		sand.append(".");
+	}
+	sands = { sand };
+	DrawObject(0, maxY-3, sands, 31);
+
+}
+void drawSeaWeed() {
+	const list<string> seaweed = { 
+		R"(   __  )",
+		R"(  / /  )",
+		R"( | |   )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |   )",
+		R"(  \ \  )",
+		R"(  |  | )"
+	};
+	DrawObject(maxX - 15, 30, seaweed, COLOR_GREEN);
 }
 bool checkIfFishExists(string searchname, list<Fish>* fishlist) {
 	for (auto& fish : *fishlist) {
@@ -424,6 +466,8 @@ int main() {
 			drawWaves(true);
 		else
 			drawWaves(false);
+		drawSand();
+		drawSeaWeed();
 
 		this_thread::sleep_for(chrono::milliseconds(tick));
 		tickcount++;
