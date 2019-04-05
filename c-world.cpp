@@ -10,7 +10,7 @@ using namespace std;
 
 // Global variables
 string lastEvent, selectedFishName;
-unsigned int maxX = 150, maxY = 40;
+unsigned int maxX = 150, maxY = 40, sealevel = 3;
 bool exitNow = false;
 
 // Configuration - global constants
@@ -30,6 +30,7 @@ void hideConsoleInput();
 bool checkIfFishExists(string, list<Fish>*);
 int randRange(int, int);
 void fishlistReadWrite(list<Fish>*, bool);
+void drawWaves(bool state);
 fishDesign selectRandomFishDesign(list<Fish>*);
 
 // Implementation
@@ -86,7 +87,7 @@ public:
 		}
 	}
 	void move_vertically(bool up) {
-		if (y > 1 && y < maxY - 7) {
+		if (y > sealevel && y < maxY - 7) {
 			if (up)
 				y--;
 			else
@@ -119,7 +120,7 @@ public:
 				} else if ((rand() % 100) < PROBABILITY_PROCREATION_ON_COLLISION) { // Procreation
 					string childname = "Child of " + it->name + " & " + this->name;
 					lastEvent = it->name + "(" + to_string(it->_id) + ") has produced the child " + childname;
-					fishlist->push_front(Fish(randRange(1,maxX), randRange(1,maxY - 5), design, randRange(1,5), childname, randRange(144,159)));
+					fishlist->push_front(Fish(randRange(1,maxX), randRange(1,maxY - 5), design, randRange(1,5), childname, randRange(COLOR_BLACK,COLOR_WHITE)));
 				}
 			}
 		}
@@ -220,7 +221,7 @@ void userInput(list<Fish> *fishlist) {
 				do {
 					randomcolor = randRange(COLOR_BLACK, COLOR_WHITE);
 				} while (randomcolor == COLOR_AVOID); // Avoid same color as background
-				fishlist->push_front(Fish(randRange(1, maxX / 2), randRange(1, maxY / 2), selectRandomFishDesign(fishlist), randRange(1, 5), fishname, randomcolor)); // Spawn somewhere in upper left quadrant
+				fishlist->push_front(Fish(randRange(1, maxX / 2), randRange(sealevel, maxY / 2), selectRandomFishDesign(fishlist), randRange(1, 5), fishname, randomcolor)); // Spawn somewhere in upper left quadrant
 				lastEvent = "Fish has been added";
 			} else {
 				lastEvent = "ERROR: A fish with that name already exists :(";
@@ -303,6 +304,30 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 		}
 	}
 }
+void drawWaves(bool state) {
+	list<string> waves;
+	string wave = "_.-.";
+	string wave2 = "-._.";
+
+	if (state) {
+		for (int x = 0; x < maxX / 2 - 2; x++) {
+			if (x % 2 == 0)
+				wave.append("_.");
+			else
+				wave.append("-.");
+		}
+		waves = {wave};
+	} else {
+		for (int x = 0; x < maxX / 2 - 2; x++) {
+			if (x % 2 == 0)
+				wave2.append("-.");
+			else
+				wave2.append("_.");
+		}
+		waves = {wave2};
+	}
+	DrawObject(0,3,waves,31);
+}
 bool checkIfFishExists(string searchname, list<Fish>* fishlist) {
 	for (auto& fish : *fishlist) {
 		if (fish.name == searchname)
@@ -312,7 +337,7 @@ bool checkIfFishExists(string searchname, list<Fish>* fishlist) {
 }
 int randRange(int min, int max) {
 	return rand() % (max + 1 - min) + min;
-}
+} 
 fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 	list<fishDesign> availableFishDesigns;
 	// If fish designs havent been loaded yet, do it now
@@ -321,7 +346,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 		fishDesign tmpStruct;
 		ifstream loadfish;
 
-		loadfish.open(FILEPATH + "fishdesigns\\fish1_ltr.txt"); // first file
+		loadfish.open(FILEPATH + "designs\\fish1_ltr.txt"); // first file
 		int i = 1;
 		while (loadfish.is_open()) { // Stop if file not found
 			// left to right design
@@ -330,7 +355,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 			loadfish.close();
 
 			// right to left design
-			loadfish.open(FILEPATH + "fishdesigns\\fish" + to_string(i) + "_rtl.txt");
+			loadfish.open(FILEPATH + "designs\\fish" + to_string(i) + "_rtl.txt");
 			if (!loadfish.is_open()) break;  // Stop if file not found
 			while (getline(loadfish, line))
 				tmpStruct.rtl.push_back(line);
@@ -339,7 +364,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 			availableFishDesigns.push_back(tmpStruct); // Push into Design list
 			tmpStruct = {};
 			i++;
-			loadfish.open(FILEPATH + "fishdesigns\\fish" + to_string(i) + "_ltr.txt"); // LTR file for next iteration
+			loadfish.open(FILEPATH + "designs\\fish" + to_string(i) + "_ltr.txt"); // LTR file for next iteration
 		}
 
 		// Check if at least one fish has been loaded
@@ -368,7 +393,7 @@ int main() {
 	
 	// Misc setup
 	srand((unsigned)time(NULL)); // randomness seed
-	int tick = TICK_DURATION; // tick duration in ms
+	int tick = TICK_DURATION, tickcount = 0; // tick duration in ms
 	list<Fish> fishlist; // Create list of active fish
 
 	// Load old state from file
@@ -395,7 +420,13 @@ int main() {
 		}
 		updateAquariumSize();
 		print_statusbar(&fishlist);
+		if (tickcount % 2 == 0)
+			drawWaves(true);
+		else
+			drawWaves(false);
+
 		this_thread::sleep_for(chrono::milliseconds(tick));
+		tickcount++;
 	} while (!exitNow);
 
 	fishlistReadWrite(&fishlist, true);
