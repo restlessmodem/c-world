@@ -12,6 +12,7 @@ using namespace std;
 string lastEvent, selectedFishName;
 unsigned int maxX = 150, maxY = 40, sealevel = 3;
 bool exitNow = false;
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
 // Configuration - global constants
 const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
@@ -30,9 +31,7 @@ void hideConsoleInput();
 bool checkIfFishExists(string, list<Fish>*);
 int randRange(int, int);
 void fishlistReadWrite(list<Fish>*, bool);
-void drawWaves(bool state);
-void drawSand();
-void drawSeaWeed();
+void drawEnvironment(bool state);
 fishDesign selectRandomFishDesign(list<Fish>*);
 
 // Implementation
@@ -47,7 +46,7 @@ public:
 	//list<string> fish_ltr, fish_rtl;
 	fishDesign design;
 	unsigned int x, y;
-	int _id, speed, color;
+	int _id, speed, color, health = 100;
 	bool ltr = true;
 
 	// Constructor
@@ -71,7 +70,13 @@ public:
 			DrawObject(x, y, design.ltr, color);
 		else
 			DrawObject(x, y, design.rtl, color);
-		cout << name << " ";
+		cout << name << " - ";
+		if (health < 30)
+			SetConsoleTextAttribute(hConsole, COLOR_RED);
+		else
+			SetConsoleTextAttribute(hConsole, COLOR_GREEN);
+		cout << health << " ";
+		SetConsoleTextAttribute(hConsole, COLOR_WHITE);
 	}
 	void move_horizontally() {
 		for (int i = 0; i < speed; i++) {
@@ -80,9 +85,10 @@ public:
 			repaint();
 
 			// Check if we reached the edge
-			if ((x == maxX - design.rtl.front().length() - name.length() - 1) || x == 1)
+			if ((x == maxX - design.rtl.front().length() - name.length() - 5) || x == 1) {
+				system("cls");
 				ltr = !ltr;
-			else if ((x > maxX - design.rtl.front().length() - name.length() - 1) || x < 1) {
+			} else if ((x > maxX - design.rtl.front().length() - name.length() - 1) || x < 1) {
 				x = 10; // Relocate poor fish who ended up outside the aquarium on console resize
 				y = 10;
 			}
@@ -104,6 +110,7 @@ public:
 				x++;
 			else
 				x--;
+			system("cls");
 			ltr = !ltr;
 		}
 	}
@@ -136,7 +143,6 @@ public:
 };
 void DrawObject(int x, int y, list<string> content, int color) { // Draw object at coordinates
 	// Declare coord and initialize handle
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = x;
 	coord.Y = y;
@@ -150,7 +156,6 @@ void DrawObject(int x, int y, list<string> content, int color) { // Draw object 
 	}
 }
 void print_statusbar(list<Fish>* fishlist) {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD coord;
 	coord.X = 1;
 	coord.Y = maxY-2;
@@ -188,14 +193,8 @@ void print_statusbar(list<Fish>* fishlist) {
 	cout << "Actions: New [n] Save & Quit [q] Select [s] Kill [k] Rename [r]";
 }
 void updateAquariumSize() {
-	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(hConsole, &csbi);
-	/*if (maxX != csbi.dwSize.X || maxY != csbi.dwSize.Y) {
-		maxX = csbi.dwSize.X;
-		maxY = csbi.dwSize.Y;
-		system("cls");
-	}*/
 	if (maxX != csbi.dwSize.X) {
 		maxX = csbi.dwSize.X;
 		system("cls");
@@ -321,43 +320,10 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 		}
 	}
 }
-void drawWaves(bool state) {
-	list<string> waves;
-	string wave = "_.-.";
-	string wave2 = "-._.";
-
-	if (state) {
-		for (int x = 0; x < maxX / 2 - 2; x++) {
-			if (x % 2 == 0)
-				wave.append("_.");
-			else
-				wave.append("-.");
-		}
-		waves = {wave};
-	} else {
-		for (int x = 0; x < maxX / 2 - 2; x++) {
-			if (x % 2 == 0)
-				wave2.append("-.");
-			else
-				wave2.append("_.");
-		}
-		waves = {wave2};
-	}
-	DrawObject(0,3,waves,31);
-}
-void drawSand() {
-	list<string> sands;
-	string sand = ".";
-
-	for (int x = 0; x < maxX - 1; x++) {
-		sand.append(".");
-	}
-	sands = { sand };
-	DrawObject(0, maxY-3, sands, 31);
-
-}
-void drawSeaWeed() {
-	const list<string> seaweed = { 
+void drawEnvironment(bool state) {
+	list<string> waves, sands;
+	string wave = "_.-.", wave2 = "-._.", sand = ".";
+	const list<string> seaweed1_ltr = {
 		R"(   __  )",
 		R"(  / /  )",
 		R"( | |   )",
@@ -368,7 +334,114 @@ void drawSeaWeed() {
 		R"(  \ \  )",
 		R"(  |  | )"
 	};
-	DrawObject(maxX - 15, 30, seaweed, COLOR_GREEN);
+	const list<string> seaweed1_rtl = {
+		R"(  __	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( |  |  )"
+	};
+	const list<string> seaweed2_ltr = {
+		R"(   __  )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( |  |  )"
+	};
+	const list<string> seaweed2_rtl = {
+		R"(  __	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(  |  | )"
+	};
+	const list<string> seaweed3_ltr = {
+		R"(   __  )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(  |  | )"
+	};
+	const list<string> seaweed3_rtl = {
+		R"(  __   )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( | |	  )",
+		R"(  \ \  )",
+		R"(   | | )",
+		R"(  / /  )",
+		R"( |  |  )"
+	};
+
+	// Sand
+	for (unsigned int x = 0; x < maxX - 1; x++) {
+		sand.append(".");
+	}
+	sands = { sand };
+	DrawObject(0, maxY - 3, sands, 31);
+	if (state) {
+		// Waves
+		for (unsigned int x = 0; x < maxX / 2 - 2; x++) {
+			if (x % 2 == 0)
+				wave.append("_.");
+			else
+				wave.append("-.");
+		}
+		waves = {wave};
+
+		// Seaweed
+		DrawObject(maxX - 10, 30, seaweed1_ltr, COLOR_GREEN);
+		DrawObject(maxX - 20, 28, seaweed2_ltr, COLOR_GREEN);
+		DrawObject(maxX - 30, 26, seaweed3_ltr, COLOR_GREEN);
+		DrawObject(maxX - 40, 30, seaweed1_ltr, COLOR_GREEN);
+		DrawObject(maxX - 50, 28, seaweed2_ltr, COLOR_GREEN);
+	} else {
+		// Waves
+		for (unsigned int x = 0; x < maxX / 2 - 2; x++) {
+			if (x % 2 == 0)
+				wave2.append("-.");
+			else
+				wave2.append("_.");
+		}
+		waves = {wave2};
+
+		// Seaweed
+		DrawObject(maxX - 10, 30, seaweed1_rtl, COLOR_GREEN);
+		DrawObject(maxX - 20, 28, seaweed2_rtl, COLOR_GREEN);
+		DrawObject(maxX - 30, 26, seaweed3_rtl, COLOR_GREEN);
+		DrawObject(maxX - 40, 30, seaweed1_rtl, COLOR_GREEN);
+		DrawObject(maxX - 50, 28, seaweed2_rtl, COLOR_GREEN);
+	}
+	DrawObject(0,3,waves,31); // Waves
 }
 bool checkIfFishExists(string searchname, list<Fish>* fishlist) {
 	for (auto& fish : *fishlist) {
@@ -420,7 +493,7 @@ fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 		}
 	}
 
-	// Select random list
+	// Select random from list
 	list<fishDesign>::iterator it = availableFishDesigns.begin();
 	int random = randRange(1,availableFishDesigns.size()-1);
 	std::advance(it, random); // move iterator to selected list index
@@ -463,11 +536,9 @@ int main() {
 		updateAquariumSize();
 		print_statusbar(&fishlist);
 		if (tickcount % 2 == 0)
-			drawWaves(true);
+			drawEnvironment(true);
 		else
-			drawWaves(false);
-		drawSand();
-		drawSeaWeed();
+			drawEnvironment(false);
 
 		this_thread::sleep_for(chrono::milliseconds(tick));
 		tickcount++;
