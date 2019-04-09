@@ -17,9 +17,9 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 default_random_engine generator;
 
 // Configuration - global constants
-const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
+const int PROBABILITY_VERTICAL_MOVE = 70, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
 const int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
-const int TICK_DURATION = 200; // in milliseconds
+const int TICK_DURATION = 500; // in milliseconds
 const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
 
 
@@ -48,7 +48,8 @@ public:
 	//list<string> fish_ltr, fish_rtl;
 	fishDesign design;
 	unsigned int x, y;
-	int _id, speed, color, health = 100;
+	int _id, speed, color;
+	double health = 100; // fish start with 100% health
 	bool ltr = true;
 
 	// Constructor
@@ -72,12 +73,12 @@ public:
 			DrawObject(x, y, design.ltr, color);
 		else
 			DrawObject(x, y, design.rtl, color);
-		cout << name << " - ";
+		cout << " " << name << " - ";
 		if (health < 30)
 			SetConsoleTextAttribute(hConsole, COLOR_RED);
 		else
 			SetConsoleTextAttribute(hConsole, COLOR_GREEN);
-		cout << health << " ";
+		cout << (int)health << "% ";
 		SetConsoleTextAttribute(hConsole, COLOR_WHITE);
 	}
 	void move_horizontally() {
@@ -95,6 +96,7 @@ public:
 				y = 10;
 			}
 		}
+		health = health - 0.05; // moving costs health
 	}
 	void move_vertically(bool up) {
 		if (y > sealevel && y < maxY - 7) {
@@ -105,6 +107,7 @@ public:
 			system("cls");
 			repaint();
 		}
+		health = health - 0.1; // moving costs health
 	}
 	void turn() {
 		if (x < maxX - design.rtl.front().length() && x > 1) { // Don't turn if on the edge
@@ -124,7 +127,7 @@ public:
 	void checkCollision(list<Fish> * fishlist) {
 		list<Fish>::iterator it;
 		for (it = fishlist->begin(); it != fishlist->end(); ++it) {
-			if (this->x == it->x && this->y == it->y && this->_id != it->_id) { // Collision reached; faster fish have lower chance
+			if (this->x == it->x && this->y == it->y && this->_id != it->_id) { // Collision reached; faster fish have less likely chance
 				if ((rand() % 100) < PROBABILITY_DEATH_ON_COLLISION) { // Death
 					it = kill(fishlist, it);
 					return;
@@ -283,6 +286,7 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 			outfile << fish.speed << endl;
 			outfile << fish.name << endl;
 			outfile << fish.color << endl;
+			outfile << fish.health << endl;
 		}
 		cout << "Aquarium state has been saved!";
 	} else {
@@ -292,7 +296,7 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 			string name, tmp;
 			fishDesign design;
 			unsigned int x, y;
-			int speed, color;
+			int speed, color, health;
 			bool ltr = true;
 
 			getline(infile, tmp);
@@ -315,8 +319,11 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 			getline(infile, name);
 			getline(infile, tmp);
 			color = atoi(tmp.c_str());
+			getline(infile, tmp);
+			health = atoi(tmp.c_str());
 
 			Fish tmpfish = Fish(x, y, design, speed, name, color);
+			tmpfish.health = health;
 			fishlist->push_front(tmpfish);
 			lastEvent = "Saved state has been loaded from file";
 		}
@@ -538,12 +545,21 @@ int main() {
 			if ((rand() % 100) < PROBABILITY_TURN) // Turn horizontally
 				it->turn();
 		}
+
+		// Check health
+		for (it = fishlist.begin(); it != fishlist.end(); ++it) {
+			if (it->health < 1) {
+				it = it->kill(&fishlist, it);
+				break;
+			}
+		}
+
 		updateAquariumSize();
 		print_statusbar(&fishlist);
 		if (tickcount % 2 == 0)
-			drawEnvironment(true);
+			drawEnvironment(true); // LTR
 		else
-			drawEnvironment(false);
+			drawEnvironment(false); // RTL
 
 		this_thread::sleep_for(chrono::milliseconds(tick));
 		tickcount++;
