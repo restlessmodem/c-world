@@ -6,6 +6,7 @@
 #include <chrono>
 #include <thread>
 #include <list>
+#include <random>
 using namespace std;
 
 // Global variables
@@ -13,6 +14,7 @@ string lastEvent, selectedFishName;
 unsigned int maxX = 150, maxY = 40, sealevel = 3;
 bool exitNow = false;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+default_random_engine generator;
 
 // Configuration - global constants
 const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
@@ -451,7 +453,10 @@ bool checkIfFishExists(string searchname, list<Fish>* fishlist) {
 	return false;
 }
 int randRange(int min, int max) {
-	return rand() % (max + 1 - min) + min;
+	//return rand() % (max + 1 - min) + min;
+	uniform_int_distribution<int> distribution(min, max);
+	auto dice = std::bind(distribution, generator);
+	return distribution(generator);
 } 
 fishDesign selectRandomFishDesign(list<Fish>* fishlist) {
 	list<fishDesign> availableFishDesigns;
