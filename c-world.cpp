@@ -17,7 +17,7 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 default_random_engine generator;
 
 // Configuration - global constants
-const int PROBABILITY_VERTICAL_MOVE = 70, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
+const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
 const int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
 const int TICK_DURATION = 500; // in milliseconds
 const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
@@ -168,7 +168,7 @@ void print_statusbar(list<Fish>* fishlist) {
 	SetConsoleTextAttribute(hConsole, COLOR_WHITE);
 
 	// Individual fish controls
-	cout << "Ausgewählter Fisch : ";
+	cout << "Selected fish: ";
 	list<Fish>::iterator it;
 	it = fishlist->begin();
 	if (selectedFishName == "" && fishlist->size() > 0) // If no fish selected, select first fish in list, if one is available
@@ -181,21 +181,22 @@ void print_statusbar(list<Fish>* fishlist) {
 		}
 	}
 
+	// Last event message
+	if (lastEvent != "") {
+		cout << " | ";
+		if (lastEvent.find("ERROR") != -1)
+			SetConsoleTextAttribute(hConsole, COLOR_RED);
+		else
+			SetConsoleTextAttribute(hConsole, COLOR_BLACK);
+		cout << lastEvent;
+		SetConsoleTextAttribute(hConsole, COLOR_WHITE);
+	}
+
 	// Aquarium controls
 	cout << "\n Fishes: " << fishlist->size() << " | ";
 	cout << maxX << "-" << maxY << " | ";
 	
-	if (lastEvent != "") {
-		if (lastEvent.find("ERROR") != -1)
-			SetConsoleTextAttribute(hConsole, COLOR_RED);
-		else 
-			SetConsoleTextAttribute(hConsole, COLOR_BLACK);
-		cout << lastEvent;
-		SetConsoleTextAttribute(hConsole, COLOR_WHITE);
-		cout << " | ";
-	}
-
-	cout << "Actions: New [n] Save & Quit [q] Select [s] Kill [k] Rename [r]";
+	cout << "Actions: New [n] Save & Quit [q] Feed All [f] Select [s] Kill [k] Rename [r]";
 }
 void updateAquariumSize() {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -219,7 +220,7 @@ void userInput(list<Fish> *fishlist) {
 		do {
 			input = _getch();
 			input = toupper(input);
-		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K' && input != 'R');
+		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K' && input != 'R' && input != 'F');
 		
 		if (input == 'N') { // New
 			lastEvent = "Neuer Fisch Name?";
@@ -254,6 +255,15 @@ void userInput(list<Fish> *fishlist) {
 					break;
 				}
 			}
+		} else if (input == 'F') { // Feed
+			list<Fish>::iterator it;
+			for (it = fishlist->begin(); it != fishlist->end(); ++it) {
+				if (it->health + 20 <= 100) // Don't overfeed
+					it->health = it->health + 20;
+				else
+					it->health = 100;
+			}
+			lastEvent = "All fish have been fed";
 		} else if (input == 'R') { // Rename
 			list<Fish>::iterator it;
 			lastEvent = "Neuer Name?";
@@ -519,8 +529,7 @@ int main() {
 	updateAquariumSize(); // set application size to console size
 	
 	// Misc setup
-	srand((unsigned)time(NULL)); // randomness seed
-	int tick = TICK_DURATION, tickcount = 0; // tick duration in ms
+	int tickcount = 0; // tick duration in ms
 	list<Fish> fishlist; // Create list of active fish
 
 	// Load old state from file
@@ -548,7 +557,7 @@ int main() {
 
 		// Check health
 		for (it = fishlist.begin(); it != fishlist.end(); ++it) {
-			if (it->health < 1) {
+			if (it->health == 0) {
 				it = it->kill(&fishlist, it);
 				break;
 			}
@@ -561,7 +570,7 @@ int main() {
 		else
 			drawEnvironment(false); // RTL
 
-		this_thread::sleep_for(chrono::milliseconds(tick));
+		this_thread::sleep_for(chrono::milliseconds(TICK_DURATION));
 		tickcount++;
 	} while (!exitNow);
 
