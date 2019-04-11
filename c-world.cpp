@@ -18,7 +18,7 @@ HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 default_random_engine generator; // for random numbers
 
 // Configuration - global constants
-const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
+const string FILEPATH = ".\\";
 const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5, TICK_DURATION = 500;
 int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
 
