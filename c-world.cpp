@@ -12,25 +12,25 @@ using namespace std;
 // Global variables
 string lastEvent, selectedFishName;
 unsigned int maxX = 150, maxY = 40, sealevel = 3;
+double waterContamination = 0;
 bool exitNow = false;
 HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-default_random_engine generator;
+default_random_engine generator; // for random numbers
 
 // Configuration - global constants
-const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5;
-const int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
-const int TICK_DURATION = 500; // in milliseconds
 const string FILEPATH = "C:\\Users\\pfisterc\\Documents\\git\\c-world\\";
-
+const int PROBABILITY_VERTICAL_MOVE = 1, PROBABILITY_VERTICAL_MOVE_UP = 50, PROBABILITY_TURN = 1, PROBABILITY_DEATH_ON_COLLISION = 5, PROBABILITY_PROCREATION_ON_COLLISION = 5, TICK_DURATION = 500;
+int COLOR_RED = 20, COLOR_BLUE = 19, COLOR_GREEN = 26, COLOR_BLACK = 16, COLOR_WHITE = 31, COLOR_AVOID = 17;
 
 // Prototypes
 struct fishDesign;
 class Fish;
 void DrawObject(int, int, list<string>, int);
 void print_statusbar(list<Fish>*);
-void updateAquariumSize();
+void updateAquarium(int);
 void hideConsoleInput();
 bool checkIfFishExists(string, list<Fish>*);
+void userInput(list<Fish>*);
 int randRange(int, int);
 void fishlistReadWrite(list<Fish>*, bool);
 void drawEnvironment(bool state);
@@ -96,7 +96,7 @@ public:
 				y = 10;
 			}
 		}
-		health = health - 0.05; // moving costs health
+		health = health - (0.05 * (waterContamination / 5)); // moving costs health; gets worse with bad water quality
 	}
 	void move_vertically(bool up) {
 		if (y > sealevel && y < maxY - 7) {
@@ -184,7 +184,7 @@ void print_statusbar(list<Fish>* fishlist) {
 	// Last event message
 	if (lastEvent != "") {
 		cout << " | ";
-		if (lastEvent.find("ERROR") != -1)
+		if (lastEvent.find("ERROR") != -1 || lastEvent.find("WARNING") != -1) // If error or warning, then in red
 			SetConsoleTextAttribute(hConsole, COLOR_RED);
 		else
 			SetConsoleTextAttribute(hConsole, COLOR_BLACK);
@@ -195,16 +195,30 @@ void print_statusbar(list<Fish>* fishlist) {
 	// Aquarium controls
 	cout << "\n Fishes: " << fishlist->size() << " | ";
 	cout << maxX << "-" << maxY << " | ";
+	cout << "Water Contamination: " << (int)waterContamination << "% | ";
 	
-	cout << "Actions: New [n] Save & Quit [q] Feed All [f] Select [s] Kill [k] Rename [r]";
+	cout << "Actions: New [n] Save & Quit [q] Feed All [f] Clean [c] Select [s] Kill [k] Rename [r]";
 }
-void updateAquariumSize() {
+void updateAquarium(int tickcount = 0) {
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
 	GetConsoleScreenBufferInfo(hConsole, &csbi);
-	if (maxX != csbi.dwSize.X) {
+	if (maxX != csbi.dwSize.X) { // Has console width changed?
 		maxX = csbi.dwSize.X;
 		system("cls");
 	}
+
+	if (tickcount % 2 == 0)
+		drawEnvironment(true); // LTR
+	else
+		drawEnvironment(false); // RTL
+	
+	if (waterContamination + 0.05 <= 100) 
+		waterContamination = waterContamination + 0.05;
+	else
+		waterContamination = 100;
+
+	if (waterContamination == 40 || waterContamination == 70 || waterContamination == 100)
+		lastEvent = "WARNING: Water Contamination has reached " + to_string((int)waterContamination) + "%!";
 }
 void hideConsoleInput() {
 	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -220,7 +234,7 @@ void userInput(list<Fish> *fishlist) {
 		do {
 			input = _getch();
 			input = toupper(input);
-		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K' && input != 'R' && input != 'F');
+		} while (input != 'N' && input != 'Q' && input != 'S' && input != 'K' && input != 'R' && input != 'F' && input != 'C');
 		
 		if (input == 'N') { // New
 			lastEvent = "Neuer Fisch Name?";
@@ -264,6 +278,9 @@ void userInput(list<Fish> *fishlist) {
 					it->health = 100;
 			}
 			lastEvent = "All fish have been fed";
+		} else if (input == 'C') { // Clean Aquarium
+			waterContamination = 0;
+			lastEvent = "Water has been cleaned";
 		} else if (input == 'R') { // Rename
 			list<Fish>::iterator it;
 			lastEvent = "Neuer Name?";
@@ -284,6 +301,7 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 	if (write) {
 		ofstream outfile;
 		outfile.open(FILEPATH + "savedfishlist.txt");
+		outfile << waterContamination << endl;
 		for (auto& fish : *fishlist) {
 			outfile << fish.x << endl;
 			outfile << fish.y << endl;
@@ -300,10 +318,14 @@ void fishlistReadWrite(list<Fish> *fishlist, bool write) {
 		}
 		cout << "Aquarium state has been saved!";
 	} else {
+		string tmp;
 		ifstream infile;
+
 		infile.open(FILEPATH + "savedfishlist.txt");
+		getline(infile, tmp);
+		waterContamination = atoi(tmp.c_str());
 		while (!infile.eof()) {
-			string name, tmp;
+			string name;
 			fishDesign design;
 			unsigned int x, y;
 			int speed, color, health;
@@ -526,7 +548,7 @@ int main() {
 	system("color 1F"); // Color and Size
 	system("mode 150, 40");
 	locale::global(locale("German_germany"));
-	updateAquariumSize(); // set application size to console size
+	updateAquarium(); // set application size to console size
 	
 	// Misc setup
 	int tickcount = 0; // tick duration in ms
@@ -557,21 +579,16 @@ int main() {
 
 		// Check health
 		for (it = fishlist.begin(); it != fishlist.end(); ++it) {
-			if (it->health == 0) {
+			if (it->health <= 0) {
 				it = it->kill(&fishlist, it);
 				break;
 			}
 		}
-
-		updateAquariumSize();
+		updateAquarium(tickcount);
 		print_statusbar(&fishlist);
-		if (tickcount % 2 == 0)
-			drawEnvironment(true); // LTR
-		else
-			drawEnvironment(false); // RTL
-
-		this_thread::sleep_for(chrono::milliseconds(TICK_DURATION));
+		
 		tickcount++;
+		this_thread::sleep_for(chrono::milliseconds(TICK_DURATION));
 	} while (!exitNow);
 
 	fishlistReadWrite(&fishlist, true);
