@@ -1,8 +1,8 @@
 # c-world
 Your windows console is now a happy place for fish  
-This project is being created as a school project for the application development class ITB-83.
-Die detaillierte Dokumentation des Codes kann hier gefunden werden: [Documentation Deutsch](Dokumentation.md)
-The detailled documentation of the code can be found here: [Documentation English](Documenation.md)
+This project is being created as a school project for the application development class ITB-83.  
+Die detaillierte Dokumentation des Codes kann hier gefunden werden: [Documentation Deutsch](Dokumentation.md)  
+The detailled documentation of the code can be found here: [Documentation English](Documenation.md)  
 
 #### Wichtige Hinweise:
 * Damit die Anwendung erfolgreich started kann, muss der "designs" Ordner vorhanden und mit Fisch-Designs gefüllt sein.
