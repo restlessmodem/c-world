@@ -18,6 +18,7 @@ You can run the finished application right away with the files in **[c-world-rel
 * Mit vertikaler Größenänderung können Fische sich außerhalb des Konsolenfensters wiederfinden. Diese Fische werden zu den Koordinatien 10,10 verschoben.
 * Der Status der Fische und des Aquariums wird über verschiedene Sitzungen gespeichert, allerdings nur wenn die Anwendung mit dem Tastenkürzel 'q' beendet wird. Wenn Sie die Anwendung mit `Alt+F4` oder mit X des Fensters beenden, wird Ihr Fortschritt verloren gehen.
 * Die Wahrscheinlichkeiten können leicht modifiziert werden. Sie befinden sich am Beginn des Quellcodes.
+* Zu Simulations- & Testzwecken kann die "Tick"-Dauer heruntergesetzt werden.
 * Da der "Cursor" der Konsole im Hauptthread umherbewegt wird, ist `cin` keine akzeptable Methode um die Tastenkürzeleingaben abzufragen. Stattdessen wird `_getch()` verwendet.
 * Manchmal zeichnet der Cursor der Windows Konsole Zeichen an falschen Stellen, während er bewegt wird. Dies ist ein bekannter Fehler der Windows-Konsole.
 
@@ -31,5 +32,6 @@ You can run the finished application right away with the files in **[c-world-rel
 * With vertical resizing it can happen that fish end up outside of the console window. These fish are relocated to the coordinates  10,10.
 * The state of the fish and aquarium is saved over sessions but only if the application is exited by pressing 'q'. If you exit with  `Alt+F4` or by pressing X on the window your progress will be lost.
 * The probabilites can be easily modified with the constants at the top of the source code.
+* For tests and simulations the "tick" duration can be lowered.
 * Because the console cursor in moved around in the main thread, `cin` is not a valid method for getting the shortcut inputs. `_getch()` is used instead.
 * Sometimes the cursor of the windows console paints characters to the wrong location while moving. This is a known issue of the windows console.
