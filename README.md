@@ -1,6 +1,8 @@
 # c-world
 Your windows console is now a happy place for fish  
 This project is being created as a school project for the application development class ITB-83.
+Die detaillierte Dokumentation des Codes kann hier gefunden werden: [Documentation Deutsch](Dokumentation.md)
+The detailled documentation of the code can be found here: [Documentation English](Documenation.md)
 
 #### Wichtige Hinweise:
 * Damit die Anwendung erfolgreich started kann, muss der "designs" Ordner vorhanden und mit Fisch-Designs gefüllt sein.
@@ -25,6 +27,3 @@ This project is being created as a school project for the application developmen
 * The state of the fish and aquarium is saved over sessions but only if the application is exited by pressing 'q'. If you exit with  `Alt+F4` or by pressing X on the window your progress will be lost.
 * The probabilites can be easily modified with the constants at the top of the source code.
 * Because the console cursor in moved around in the main thread, `cin` is not a valid method for getting the shortcut inputs. `_getch()` is used instead.
-
-Die detaillierte Dokumentation des Codes kann hier gefunden werden: [Documentation Deutsch](Dokumentation.md)
-The detailled documentation of the code can be found here: [Documentation English](Documenation.md)
