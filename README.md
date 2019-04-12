@@ -10,7 +10,7 @@ You can run the finished application right away with the files in **[c-world-rel
 
 #### Wichtige Hinweise:
 * **Damit die Anwendung erfolgreich started kann, muss der "designs" Ordner vorhanden und mit Fisch-Designs gefüllt sein.**
-* Fisch-Designs können im "desings" Ordner im gegebenen Format hinzugefügt werden, allerdings muss mindestens ein Design vorhanden sein, damit die Anwendung lauffähig ist. Sie müssen mit Leerzeichen gepaddet sein.
+* Fisch-Designs können im "desings" Ordner im gegebenen Format hinzugefügt werden, allerdings muss mindestens ein Design vorhanden sein, damit die Anwendung lauffähig ist. Neun sind standardmäßig vorhanden. Sie müssen mit Leerzeichen gepaddet sein.
 * Fisch-spezifishe Aktionen (Tastenkürzel wie k = kill oder r = rename) werden mit dem ausgewälten Fisch ausgeführt. Sie können einen Fisch auswählen, indem sie 's' drücken und seinen Namen eingeben.
 * Die Zahl neben dem Namen eines Fisches zeigt seine Gesundheit an. Fische verlieren mit der Zeit Gesundheit, Sie können sie wiederherstellen, indem Sie sie füttern. Es können nur alle Fische gleichzeitig gefüttert werden.
 * Die "Wasser Contamination" wird mit der Zeit schlimmer. Sie können ihr mit Reinigung entgegenwirken. Je schlimmer die "Wasser Contamination" wird, desto schneller verlieren die Fische auch ihre Gesundheit.
@@ -23,7 +23,7 @@ You can run the finished application right away with the files in **[c-world-rel
 
 #### Things to know:
 * **For the application to start successfully the folder "designs" needs to be available in the application folder and be filled with fish designs.**
-* Fish Designs can be added in the "designs" folder by the user in the given format but at least one design needs to be availabe for the application to run successfully. They need to be padded with whitespaces.
+* Fish Designs can be added in the "designs" folder by the user in the given format but at least one design needs to be availabe for the application to run successfully. Nine are available by default. They need to be padded with whitespaces.
 * Fish specific actions (shortcuts like k = kill or r = rename) work on the selected fish. You may select a fish by pressing 's' and typing its name.
 * The number next to a fish's name indicates its health. Fish lose health over time, you can restore it by feeding. You can only feed all fish at the same time.
 * The `waterContamination` gets worse over time. You can mitigate it by cleaning. With rising water contamination the fish start to lose health much quicker.
