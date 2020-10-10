@@ -1,26 +1,11 @@
 # c-world
-Your windows console is now a happy place for fish  
-This project is being created as a school project for the application development class ITB-83.  
+Your windows console is now a happy place for fish.
+This project has been created as a career school project for the application development class ITB-83 to demonstrate basic C/C++ language knowlege.     
 
-Die detaillierte Dokumentation des Codes kann hier gefunden werden: **[Documentation Deutsch](Dokumentation.md)**  
-Sie können die fertige Anwendung direkt ausführen mit den Dateien in **[c-world-release.zip](c-world-release.zip)**   
+---
 
 The detailled documentation of the code can be found here: **[Documentation English](Documentation.md)**  
 You can run the finished application right away with the files in **[c-world-release.zip](c-world-release.zip)**  
-
-#### Wichtige Hinweise:
-* **Damit die Anwendung erfolgreich started kann, muss der "designs" Ordner vorhanden und mit Fisch-Designs gefüllt sein.**
-* Fisch-Designs können im "desings" Ordner im gegebenen Format hinzugefügt werden, allerdings muss mindestens ein Design vorhanden sein, damit die Anwendung lauffähig ist. Neun sind standardmäßig vorhanden. Sie müssen mit Leerzeichen gepaddet sein.
-* Fisch-spezifishe Aktionen (Tastenkürzel wie k = kill oder r = rename) werden mit dem ausgewälten Fisch ausgeführt. Sie können einen Fisch auswählen, indem sie 's' drücken und seinen Namen eingeben.
-* Die Zahl neben dem Namen eines Fisches zeigt seine Gesundheit an. Fische verlieren mit der Zeit Gesundheit, Sie können sie wiederherstellen, indem Sie sie füttern. Es können nur alle Fische gleichzeitig gefüttert werden.
-* Die "Wasser Contamination" wird mit der Zeit schlimmer. Sie können ihr mit Reinigung entgegenwirken. Je schlimmer die "Wasser Contamination" wird, desto schneller verlieren die Fische auch ihre Gesundheit.
-* Die Größe des Konsolenfesters zu ändern ist unterstützt, jedoch nur horizontal und nicht schmaler als die Status Bar. Missachten dieser Anweisung wird Anzeigefehler verursachen.
-* Mit vertikaler Größenänderung können Fische sich außerhalb des Konsolenfensters wiederfinden. Diese Fische werden zu den Koordinatien 10,10 verschoben.
-* Der Status der Fische und des Aquariums wird über verschiedene Sitzungen gespeichert, allerdings nur wenn die Anwendung mit dem Tastenkürzel 'q' beendet wird. Wenn Sie die Anwendung mit `Alt+F4` oder mit X des Fensters beenden, wird Ihr Fortschritt verloren gehen.
-* Die Wahrscheinlichkeiten können leicht modifiziert werden. Sie befinden sich am Beginn des Quellcodes.
-* Zu Simulations- & Testzwecken kann die "Tick"-Dauer heruntergesetzt werden.
-* Da der "Cursor" der Konsole im Hauptthread umherbewegt wird, ist `cin` keine akzeptable Methode um die Tastenkürzeleingaben abzufragen. Stattdessen wird `_getch()` verwendet.
-* Manchmal zeichnet der Cursor der Windows Konsole Zeichen an falschen Stellen, während er bewegt wird. Dies ist ein bekannter Fehler der Windows-Konsole.
 
 #### Things to know:
 * **For the application to start successfully the folder "designs" needs to be available in the application folder and be filled with fish designs.**
