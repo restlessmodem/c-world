@@ -1,6 +1,6 @@
 # c-world
 Your windows console is now a happy place for fish.
-This project has been created as a career school project for the application development class ITB-83 to demonstrate basic C/C++ language knowlege.     
+This project has been created as a career school project for the application development class ITB-83 to demonstrate basic C/C++ language knowledge.     
 
 ---
 
